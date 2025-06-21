@@ -11,7 +11,12 @@
     <style>
         body {
             font-family: 'Inter', sans-serif; /* Fallback font */
-            background-color: #1a202c; /* Solid dark background */
+            background-color: #1a202c; /* Fallback solid dark background */
+            background-image: url('d9913d442a634894d95237b7ff2fe83e_high.webp'); /* Your background image */
+            background-size: cover; /* Cover the entire screen */
+            background-position: center; /* Center the image */
+            background-repeat: no-repeat; /* Do not repeat the image */
+            background-attachment: fixed; /* Keep background fixed while scrolling (if content overflows) */
             display: flex;
             flex-direction: column;
             justify-content: space-between; /* Space out header, content, footer */
@@ -27,7 +32,7 @@
         /* Apply 'Bangers' font to game-specific elements */
         .game-font {
             font-family: 'Bangers', cursive;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Add some shadow for readability */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* Stronger shadow for readability on image background */
         }
 
         .score-text {
@@ -38,6 +43,11 @@
             text-align: center;
             width: 100%;
             padding-top: 20px; /* Padding from top of screen */
+            background-color: rgba(0, 0, 0, 0.4); /* Slightly transparent background for readability */
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-top: 20px; /* Add margin to space it from the top */
         }
         .click-button {
             background-color: #3b82f6; /* Blue button */
@@ -77,6 +87,9 @@
             margin-top: 20px; /* Space below button */
             text-align: center;
             width: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Transparent background */
+            padding: 5px 15px;
+            border-radius: 5px;
         }
         .loading-text {
             font-size: 1rem; /* Smaller loading text */
@@ -84,6 +97,9 @@
             margin-top: 10px;
             text-align: center;
             width: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Transparent background */
+            padding: 5px 15px;
+            border-radius: 5px;
         }
 
         /* Main content area to center the button and score vertically */
@@ -104,7 +120,7 @@
             justify-content: space-around; /* Distribute items evenly with space around them */
             align-items: center;
             width: 100%;
-            background-color: #2d3748; /* Darker background for navbar */
+            background-color: rgba(45, 55, 72, 0.9); /* Slightly transparent background for navbar */
             padding: 8px 0; /* Reduced padding */
             position: fixed; /* Fix at the bottom */
             bottom: 0;
