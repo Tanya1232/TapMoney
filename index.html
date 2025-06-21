@@ -414,7 +414,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Конфигурация Firebase для вашего веб-приложения
+        // Конфигурация Firebase для вашего веб-приложения (ваша конфигурация, полученная из Firebase Console)
         const firebaseConfig = {
             apiKey: "AIzaSyBxymJpyy8rkoNxpGA2AJPow1dsq1VuC1U",
             authDomain: "tapmoney-game.firebaseapp.com",
@@ -430,8 +430,8 @@
         let db;
         let auth;
         let userId;
-        // Глобальный ID приложения из окружения Canvas
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
+        // Глобальный ID приложения из окружения Canvas. Используем его, если он доступен, иначе наш projectId.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; 
         let isAuthReady = false; // Флаг готовности аутентификации
 
         // --- Основные элементы игры ---
@@ -491,35 +491,28 @@
                 }
             });
 
-            // Сброс состояний для основных элементов игры при переключении страниц
-            clickButton.disabled = true;
-            loadingText.textContent = "";
+            // Сброс сообщений о загрузке и таймеров при переключении страниц
+            loadingText.textContent = ""; 
             timerDisplay.classList.add('hidden');
-
-            // Сброс состояний для элементов улучшений
-            if (upgradeClickButton) {
-                upgradeClickButton.disabled = true;
-                upgradeLoadingText.textContent = "";
-                upgradeTimerDisplay.classList.add('hidden');
-            }
-            if (upgradePassiveIncomeButton) {
-                upgradePassiveIncomeButton.disabled = false; // Всегда включено для улучшения
-                passiveIncomeLoadingText.textContent = "";
-                passiveIncomeTimerDisplay.classList.add('hidden');
-            }
+            if (upgradeLoadingText) upgradeLoadingText.textContent = "";
+            if (upgradeTimerDisplay) upgradeTimerDisplay.classList.add('hidden');
+            if (passiveIncomeLoadingText) passiveIncomeLoadingText.textContent = "";
+            if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
 
             // Специфическая логика в зависимости от отображаемой страницы
             if (pageId === 'mainPage') {
-                // Если Firebase готов, загрузить данные и включить кнопку
+                // Кнопка будет включена только после успешной загрузки данных в loadGameData
+                clickButton.disabled = true; 
+                loadingText.textContent = "Загрузка данных..."; // Показываем загрузку, пока не загрузится
+
                 if (isAuthReady && db && userId) { 
-                    loadGameData(); 
+                    loadGameData(); // Повторно загружаем данные, чтобы убедиться в свежести
                 } else {
-                    // Если Firebase еще не готов, показать загрузку и ждать инициализации
-                    loadingText.textContent = "Загрузка данных...";
-                    clickButton.disabled = true;
+                    // Если Firebase еще не готов, пытаемся инициализировать
+                    initializeFirebase(); // DOMContentLoaded уже вызвал, но на всякий случай
                 }
             } else if (pageId === 'improvementsPage') {
-                 // Для страницы улучшений, убедиться, что кнопка улучшения клика правильно включена/выключена
+                // Для страницы улучшений, убедиться, что кнопка улучшения клика правильно включена/выключена
                  if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
                     upgradeClickButton.disabled = true; // Все еще выключена, если реклама загружается/таймер идет
                 } else {
@@ -574,22 +567,17 @@
 
         // Функция для загрузки всех игровых данных из Firestore
         async function loadGameData() {
-            loadingText.textContent = "Загрузка данных...";
-            clickButton.disabled = true; // Отключить кнопку во время загрузки
+            console.log("loadGameData: Начало загрузки игровых данных.");
+            loadingText.textContent = "Загрузка игровых данных...";
+            clickButton.disabled = true; // Убеждаемся, что кнопка отключена во время загрузки
 
-            if (!db || !userId) {
-                console.error("Firestore или userId не инициализированы. Повторная попытка инициализации.");
-                // Попытаться повторно инициализировать Firebase, хотя DOMContentLoaded должен это обрабатывать
-                await initializeFirebase();
-                if (!db || !userId) {
-                    console.error("Firestore или userId все еще не инициализированы после повторной попытки. Невозможно загрузить данные.");
-                    loadingText.textContent = "Ошибка: база данных не готова.";
-                    return;
-                }
+            if (!db || !userId || !isAuthReady) {
+                console.error("loadGameData: Firestore или userId не инициализированы или аутентификация не готова. Пропускаем загрузку данных.");
+                loadingText.textContent = "Ошибка: база данных не готова.";
+                return;
             }
 
             try {
-                // Ссылка на документ с данными пользователя
                 const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
                 const docSnap = await getDoc(userDocRef);
 
@@ -600,45 +588,46 @@
                     passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
                     lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
                     accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
-                    console.log("Игровые данные загружены из Firestore:", data);
+                    console.log("loadGameData: Игровые данные загружены из Firestore:", data);
                 } else {
-                    console.log("Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
+                    console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
                     score = 0;
                     tapCoinsPerAd = 1.00;
                     passiveIncomeRate = 0.000;
                     lastLoginTimestamp = Date.now();
                     accumulatedPassiveIncome = 0;
-                    // Немедленное сохранение данных по умолчанию для новых пользователей
-                    await saveGameData(); 
+                    await saveGameData(); // Сохраняем данные по умолчанию для нового пользователя
                 }
 
                 // Расчет пассивного дохода, заработанного с последнего входа
                 const currentTime = Date.now();
                 const elapsedTimeMs = currentTime - lastLoginTimestamp;
-                const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); // Перевод миллисекунд в часы
+                const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); 
 
                 if (passiveIncomeRate > 0 && elapsedTimeHours > 0) {
                     const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
                     accumulatedPassiveIncome = parseFloat((accumulatedPassiveIncome + newlyAccumulated).toFixed(2));
-                    console.log(`Накоплен пассивный доход: ${newlyAccumulated.toFixed(2)} TapCoins за ${elapsedTimeHours.toFixed(2)} часов (Всего: ${accumulatedPassiveIncome.toFixed(2)})`);
+                    console.log(`loadGameData: Накоплен пассивный доход: ${newlyAccumulated.toFixed(2)} TapCoins за ${elapsedTimeHours.toFixed(2)} часов (Всего: ${accumulatedPassiveIncome.toFixed(2)})`);
                 }
-                lastLoginTimestamp = currentTime; // Обновление времени последнего входа после расчета
+                lastLoginTimestamp = currentTime; // Обновление времени последнего входа
 
                 updateDisplays(); // Обновление всех элементов интерфейса
 
                 loadingText.textContent = ""; // Очистка сообщения о загрузке
-                clickButton.disabled = false; // Включение основной кнопки
+                clickButton.disabled = false; // Включение основной кнопки после успешной загрузки
+                console.log("loadGameData: Игровые данные загружены и кнопка активирована.");
+
             } catch (error) {
-                console.error("Ошибка загрузки игровых данных из Firestore:", error);
-                loadingText.textContent = "Ошибка загрузки игры. Пожалуйста, перезапустите игру.";
-                clickButton.disabled = true;
+                console.error("loadGameData: ОШИБКА загрузки игровых данных из Firestore:", error);
+                loadingText.textContent = `Ошибка загрузки игры: ${error.message}. Перезапустите.`;
+                clickButton.disabled = true; // Кнопка остается выключенной при ошибке
             }
         }
 
         // Функция для сохранения всех игровых данных в Firestore
         async function saveGameData() {
             if (!db || !userId) {
-                console.error("Firestore или userId не инициализированы. Невозможно сохранить данные.");
+                console.error("saveGameData: Firestore или userId не инициализированы. Невозможно сохранить данные.");
                 return;
             }
             try {
@@ -650,10 +639,10 @@
                     lastLoginTimestamp: lastLoginTimestamp,
                     accumulatedPassiveIncome: accumulatedPassiveIncome
                 };
-                await setDoc(userDocRef, dataToSave, { merge: true }); // Использовать merge: true, чтобы избежать перезаписи других полей, если они существуют
-                console.log("Игровые данные сохранены в Firestore:", dataToSave);
+                await setDoc(userDocRef, dataToSave, { merge: true }); 
+                console.log("saveGameData: Игровые данные сохранены в Firestore:", dataToSave);
             } catch (error) {
-                console.error("Ошибка сохранения игровых данных в Firestore:", error);
+                console.error("saveGameData: Ошибка сохранения игровых данных в Firestore:", error);
             }
         }
 
@@ -661,9 +650,10 @@
         function updateDisplays() {
             scoreDisplay.textContent = score.toFixed(2);
             tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
-            passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
-            accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`;
-            claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome <= 0);
+            // Проверяем существование элементов перед обновлением
+            if (passiveIncomeRateDisplay) passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
+            if (accumulatedPassiveIncomeDisplay) accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`;
+            if (claimPassiveIncomeButton) claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome <= 0);
 
             if (passiveIncomeRateDisplayImp) {
                 passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
@@ -679,40 +669,42 @@
             targetLoadingText.textContent = 'Загрузка рекламы...'; // Показать текст загрузки для рекламы
 
             if (typeof show_9473169 === 'function') {
-                console.log("Вызов рекламы Monetag...");
+                console.log("showMonetagAd: Вызов рекламы Monetag...");
                 show_9473169();
-                // Выполнение колбэка после небольшой задержки, чтобы реклама загрузилась/отобразилась
-                // В реальном сценарии, в идеале, у вас был бы колбэк закрытия рекламы
                 setTimeout(() => {
                     if (callback) callback();
-                }, 500); // Небольшая задержка, чтобы функция рекламы успела выполниться
+                }, 500); 
             } else {
-                console.warn("Функция show_9473169() не найдена. SDK Monetag мог еще не загрузиться или зона настроена по-другому.");
+                console.warn("showMonetagAd: Функция show_9473169() не найдена. SDK Monetag мог еще не загрузиться или зона настроена по-другому.");
                 // Запасной вариант: если реклама не показывается, просто продолжить
-                if (callback) callback();
+                // Возможно, здесь стоит добавить сообщение пользователю или более длительную задержку
+                setTimeout(() => {
+                    if (callback) callback();
+                }, 3000); // Увеличим задержку для имитации просмотра рекламы, если SDK не загрузился
             }
         }
 
         // Обработчик события клика для основной кнопки игры
-        clickButton.addEventListener('click', async () => { // Сделано асинхронным для await saveGameData
-            showMonetagAd(async () => { // Внутренний колбэк сделан асинхронным
+        clickButton.addEventListener('click', async () => { 
+            console.log("Click button clicked.");
+            showMonetagAd(async () => { 
                 let timeLeft = adTimerDuration;
                 timerDisplay.textContent = `До награды: ${timeLeft} сек`;
                 timerDisplay.classList.remove('hidden');
-                loadingText.textContent = ""; // Очистка текста загрузки рекламы, так как таймер начинается
+                loadingText.textContent = ""; 
 
-                const timerInterval = setInterval(async () => { // Колбэк интервала сделан асинхронным
+                const timerInterval = setInterval(async () => { 
                     timeLeft--;
                     timerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                     if (timeLeft <= 0) {
-                        clearInterval(timerInterval); // Остановка таймера
-                        score = parseFloat((score + tapCoinsPerAd).toFixed(2)); // Добавление текущего значения множителя к счету
-                        updateDisplays(); // Немедленное обновление отображения счета
-                        clickButton.disabled = false; // Активация кнопки
-                        timerDisplay.classList.add('hidden'); // Скрытие таймера
-                        console.log('Счет увеличен, кнопка активна. Сохранение...');
-                        await saveGameData(); // Сохранение всех игровых данных
+                        clearInterval(timerInterval); 
+                        score = parseFloat((score + tapCoinsPerAd).toFixed(2)); 
+                        updateDisplays(); 
+                        clickButton.disabled = false; 
+                        timerDisplay.classList.add('hidden'); 
+                        console.log('Клик: Счет увеличен, кнопка активна. Сохранение...');
+                        await saveGameData(); 
                     }
                 }, 1000);
             }, loadingText, timerDisplay, clickButton);
@@ -720,25 +712,26 @@
 
         // Обработчик события клика для кнопки 'Улучшить клик'
         if (upgradeClickButton) {
-            upgradeClickButton.addEventListener('click', async () => { // Сделано асинхронным
-                showMonetagAd(async () => { // Внутренний колбэк сделан асинхронным
+            upgradeClickButton.addEventListener('click', async () => { 
+                console.log("Upgrade click button clicked.");
+                showMonetagAd(async () => { 
                     let timeLeft = adTimerDuration;
                     upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
                     upgradeTimerDisplay.classList.remove('hidden');
                     upgradeLoadingText.textContent = "";
 
-                    const upgradeTimerInterval = setInterval(async () => { // Колбэк интервала сделан асинхронным
+                    const upgradeTimerInterval = setInterval(async () => { 
                         timeLeft--;
                         upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                         if (timeLeft <= 0) {
                             clearInterval(upgradeTimerInterval);
-                            tapCoinsPerAd = parseFloat((tapCoinsPerAd + 0.10).toFixed(2)); // Увеличение на 0.10, форматирование, чтобы избежать проблем с плавающей запятой
-                            updateDisplays(); // Обновление отображения на главной странице
+                            tapCoinsPerAd = parseFloat((tapCoinsPerAd + 0.10).toFixed(2)); 
+                            updateDisplays(); 
                             upgradeClickButton.disabled = false;
                             upgradeTimerDisplay.classList.add('hidden');
-                            console.log('Множитель клика улучшен. Сохранение...');
-                            await saveGameData(); // Сохранение всех игровых данных
+                            console.log('Улучшение клика: Множитель клика улучшен. Сохранение...');
+                            await saveGameData(); 
                             // Повторное включение основной кнопки, если на главной странице и не в активном процессе рекламы
                             if (currentPageId === 'mainPage' && timerDisplay.classList.contains('hidden') && loadingText.textContent === "") {
                                 clickButton.disabled = false;
@@ -751,24 +744,25 @@
 
         // Обработчик события клика для кнопки 'Улучшить пассивный доход'
         if (upgradePassiveIncomeButton) {
-            upgradePassiveIncomeButton.addEventListener('click', async () => { // Сделано асинхронным
-                showMonetagAd(async () => { // Внутренний колбэк сделан асинхронным
+            upgradePassiveIncomeButton.addEventListener('click', async () => { 
+                console.log("Upgrade passive income button clicked.");
+                showMonetagAd(async () => { 
                     let timeLeft = adTimerDuration;
                     passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
                     passiveIncomeTimerDisplay.classList.remove('hidden');
                     passiveIncomeLoadingText.textContent = "";
 
-                    const passiveTimerInterval = setInterval(async () => { // Колбэк интервала сделан асинхронным
+                    const passiveTimerInterval = setInterval(async () => { 
                         timeLeft--;
                         passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                         if (timeLeft <= 0) {
                             clearInterval(passiveTimerInterval);
-                            passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); // Увеличение на 0.001, округление до 3 знаков после запятой
-                            updateDisplays(); // Обновление отображения
+                            passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); 
+                            updateDisplays(); 
                             upgradePassiveIncomeButton.disabled = false;
                             passiveIncomeTimerDisplay.classList.add('hidden');
-                            console.log('Скорость пассивного дохода улучшена. Сохранение...');
+                            console.log('Улучшение пассивного дохода: Скорость пассивного дохода улучшена. Сохранение...');
                             await saveGameData();
                         }
                     }, 1000);
@@ -778,12 +772,13 @@
 
         // Обработчик события клика для кнопки 'Забрать пассивный доход'
         if (claimPassiveIncomeButton) {
-            claimPassiveIncomeButton.addEventListener('click', async () => { // Сделано асинхронным
+            claimPassiveIncomeButton.addEventListener('click', async () => { 
+                console.log("Claim passive income button clicked.");
                 if (accumulatedPassiveIncome > 0) {
                     score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
-                    accumulatedPassiveIncome = 0; // Сброс накопленного
-                    updateDisplays(); // Обновление отображения основного счета и отключение кнопки
-                    await saveGameData(); // Сохранение обновленных игровых данных
+                    accumulatedPassiveIncome = 0; 
+                    updateDisplays(); 
+                    await saveGameData(); 
                     console.log("Пассивный доход забран!");
                 }
             });
@@ -791,60 +786,72 @@
 
         // Инициализация Firebase и загрузка данных
         async function initializeFirebase() {
+            loadingText.textContent = "Инициализация Firebase..."; 
+            console.log("initializeFirebase: Начинается инициализация Firebase.");
             try {
                 // Инициализация приложения Firebase, если оно еще не инициализировано
                 if (!app) {
-                    const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : JSON.stringify(firebaseConfig);
-                    const config = JSON.parse(firebaseConfigStr);
-
-                    if (Object.keys(config).length === 0 || !config.projectId) {
+                    // Используем вашу конфигурацию firebaseConfig.
+                    // __firebase_config от Canvas окружения может быть полезен, но для простоты
+                    // и устранения проблем используем вашу явную конфигурацию.
+                    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
                         throw new Error("Конфигурация Firebase отсутствует или пуста.");
                     }
-                    app = initializeApp(config);
+                    app = initializeApp(firebaseConfig);
+                    console.log("initializeFirebase: Приложение Firebase инициализировано.");
                 }
                 
                 // Инициализация Auth и Firestore, если они еще не инициализированы
-                if (!auth) auth = getAuth(app);
-                if (!db) db = getFirestore(app);
+                if (!auth) {
+                    auth = getAuth(app);
+                    console.log("initializeFirebase: Auth Firebase инициализирован.");
+                }
+                if (!db) {
+                    db = getFirestore(app);
+                    console.log("initializeFirebase: Firestore Firebase инициализирован.");
+                }
 
                 // Аутентификация пользователя только если он еще не аутентифицирован
                 if (!auth.currentUser) {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
-                        console.log("Вход выполнен с пользовательским токеном.");
+                        console.log("initializeFirebase: Вход выполнен с пользовательским токеном.");
                     } else {
+                        // Если токен не предоставлен (например, вне среды Canvas), используем анонимную аутентификацию
                         await signInAnonymously(auth);
-                        console.log("Вход выполнен анонимно.");
+                        console.log("initializeFirebase: Вход выполнен анонимно.");
                     }
                 }
 
                 // Установка userId после успешной аутентификации
                 userId = auth.currentUser?.uid || crypto.randomUUID();
-                console.log("ID пользователя:", userId);
+                console.log("initializeFirebase: ID пользователя:", userId);
                 isAuthReady = true; // Установка флага, что аутентификация готова
+                console.log("initializeFirebase: Firebase успешно инициализирован и аутентифицирован.");
 
-                // Загрузка игровых данных из Firestore
-                await loadGameData(); // Это также обновит отображения
+                // Загрузка игровых данных из Firestore после инициализации
+                await loadGameData(); // Эта функция обновит UI и активирует кнопку
 
             } catch (error) {
-                console.error("Ошибка инициализации или аутентификации Firebase:", error);
-                loadingText.textContent = "Ошибка загрузки игры. Пожалуйста, перезапустите игру.";
-                clickButton.disabled = true;
+                console.error("initializeFirebase: КРИТИЧЕСКАЯ ОШИБКА: Firebase инициализация или аутентификация не удались:", error);
+                loadingText.textContent = `Ошибка загрузки игры: ${error.message}. Перезапустите.`;
+                clickButton.disabled = true; // Кнопка остается выключенной при ошибке Firebase
+                isAuthReady = false; // Отмечаем аутентификацию как неготовую
             }
         }
 
         // Начальная загрузка игровых данных и отображение главной страницы при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log("DOMContentLoaded: DOM полностью загружен. Начинается инициализация приложения.");
             await initializeFirebase();
-            showPage('mainPage'); // Убедиться, что главная страница активна при загрузке после загрузки данных
+            showPage('mainPage'); // Убедиться, что главная страница активна при загрузке
         });
 
         // Сохранение игровых данных при закрытии или скрытии приложения
         window.addEventListener('beforeunload', saveGameData);
         window.addEventListener('pagehide', () => {
+            console.log("pagehide: Приложение скрывается/закрывается. Сохранение данных.");
             saveGameData();
-            // Опционально: добавить небольшую задержку для завершения асинхронного сохранения, но не гарантируется
-            // setTimeout(() => {}, 100);
         });
     </script>
 </body>
