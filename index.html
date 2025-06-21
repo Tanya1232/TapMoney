@@ -43,40 +43,41 @@
             text-align: center;
             width: 100%;
             padding-top: 20px; /* Padding from top of screen */
-            background-color: rgba(0, 0, 0, 0.4); /* Slightly transparent background for readability */
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            margin-top: 20px; /* Add margin to space it from the top */
+            /* Removed background-color property */
         }
         .click-button {
-            background-color: #3b82f6; /* Blue button */
-            color: white;
-            width: 180px; /* Slightly smaller fixed width for round shape */
-            height: 180px; /* Slightly smaller fixed height for round shape */
+            /* Changed from solid blue to a more subtle background, image/icon will be inside */
+            background-color: rgba(59, 130, 246, 0.2); /* Very subtle transparent blue */
+            border: 5px solid #3b82f6; /* Blue border to define circle */
+            color: white; /* Text color if any, or for emoji */
+            width: 180px; /* Fixed width for round shape */
+            height: 180px; /* Fixed height for round shape */
             border-radius: 50%; /* Make it perfectly round */
-            font-size: 1.3rem; /* Text size for button */
+            font-size: 5rem; /* Large font size for the emoji/icon */
             display: flex; /* Flexbox for centering content inside */
             justify-content: center;
             align-items: center;
-            border: none;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Stronger shadow for floating effect */
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.6); /* Initial shadow and subtle glow */
             position: relative;
-            flex-shrink: 0; /* Prevent button from shrinking */
+            flex-shrink: 0;
+            overflow: hidden; /* Hide anything outside the circle, especially for future image */
         }
         .click-button:hover:not(:disabled) {
-            background-color: #2563eb; /* Darker on hover */
+            background-color: rgba(37, 99, 235, 0.3); /* Darker transparent blue on hover */
+            border-color: #2563eb; /* Darker border on hover */
             transform: scale(1.05); /* Slight enlarge on hover */
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5); /* Stronger shadow on hover */
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5), 0 0 25px rgba(59, 130, 246, 0.8); /* Stronger shadow and glow */
         }
         .click-button:active:not(:disabled) {
-            transform: scale(0.98); /* Slight shrink on click */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Smaller shadow on click */
+            transform: scale(0.95); /* Deeper press effect */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), 0 0 10px rgba(59, 130, 246, 0.4); /* Smaller shadow and less glow on press */
+            background-color: rgba(37, 99, 235, 0.5); /* More opaque blue on press */
         }
         .click-button:disabled {
-            background-color: #4a5568; /* Gray for disabled button */
+            background-color: rgba(74, 85, 104, 0.5); /* Gray for disabled button */
+            border-color: #4a5568;
             cursor: not-allowed;
             box-shadow: none;
             transform: none;
@@ -87,9 +88,7 @@
             margin-top: 20px; /* Space below button */
             text-align: center;
             width: 100%;
-            background-color: rgba(0, 0, 0, 0.4); /* Transparent background */
-            padding: 5px 15px;
-            border-radius: 5px;
+            /* Removed background-color property */
         }
         .loading-text {
             font-size: 1rem; /* Smaller loading text */
@@ -97,9 +96,7 @@
             margin-top: 10px;
             text-align: center;
             width: 100%;
-            background-color: rgba(0, 0, 0, 0.4); /* Transparent background */
-            padding: 5px 15px;
-            border-radius: 5px;
+            /* Removed background-color property */
         }
 
         /* Main content area to center the button and score vertically */
@@ -165,7 +162,9 @@
     <!-- Game Screen -->
     <div id="gameScreen">
         <p class="score-text game-font">TapCoins: <span id="score">0</span></p>
-        <button id="clickButton" class="click-button" disabled>Загрузка...</button>
+        <button id="clickButton" class="click-button" disabled>
+            💰 <!-- Coin emoji as a placeholder -->
+        </button>
         <p id="timerDisplay" class="timer-text hidden"></p>
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
     </div>
@@ -256,7 +255,7 @@
                 scoreDisplay.textContent = score;
                 loadingText.textContent = ""; // Clear loading message
                 clickButton.disabled = false; // Enable button
-                clickButton.textContent = 'Получить TapCoins';
+                // clickButton.textContent = 'Получить TapCoins'; // Removed text content, now using emoji
             } catch (error) {
                 console.error("Error loading TapCoins from localStorage:", error);
                 loadingText.textContent = "Ошибка загрузки TapCoins. Пожалуйста, перезапустите игру.";
@@ -288,7 +287,7 @@
         // Click event handler for the main game button
         clickButton.addEventListener('click', () => {
             clickButton.disabled = true;
-            clickButton.textContent = 'Загрузка рекламы...';
+            // clickButton.textContent = 'Загрузка рекламы...'; // Removed text content, now using emoji
             timerDisplay.classList.add('hidden');
 
             showMonetagAd();
@@ -305,7 +304,7 @@
                     clearInterval(timerInterval);
                     score++;
                     scoreDisplay.textContent = score;
-                    clickButton.textContent = 'Получить TapCoins';
+                    // clickButton.textContent = 'Получить TapCoins'; // Removed text content, now using emoji
                     clickButton.disabled = false;
                     timerDisplay.classList.add('hidden');
                     console.log('Score increased, button active. Saving...');
@@ -323,3 +322,5 @@
     </script>
 </body>
 </html>
+
+    
