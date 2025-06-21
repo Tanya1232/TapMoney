@@ -107,15 +107,16 @@
             align-items: center;
             flex-grow: 1; /* Allows it to take up available vertical space */
             width: 100%;
-            padding-bottom: 70px; /* Space for the fixed navbar */
+            padding-bottom: 140px; /* Increased space for the fixed two-row navbar */
             box-sizing: border-box;
         }
 
         /* Navbar styles */
         .navbar {
             display: flex;
+            flex-wrap: wrap; /* Allow items to wrap to next line */
             justify-content: space-around; /* Distribute items evenly with space around them */
-            align-items: center;
+            align-items: flex-start; /* Align items to the top of the container */
             width: 100%;
             background-color: rgba(45, 55, 72, 0.9); /* Slightly transparent background for navbar */
             padding: 8px 0; /* Reduced padding */
@@ -124,24 +125,28 @@
             left: 0;
             z-index: 100; /* Ensure it's on top */
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3); /* Shadow on top */
+            height: auto; /* Allow height to adjust for two rows */
         }
         .nav-button {
             background-color: transparent;
             border: none;
             color: #cbd5e0;
-            font-size: 0.75rem; /* Smaller font size for button text */
-            padding: 6px 5px; /* Reduced padding */
+            font-size: 0.7rem; /* Even smaller font size for button text */
+            padding: 6px 3px; /* Reduced padding for more compactness */
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px; /* Reduced gap between icon and text */
-            flex: 1; /* Allow buttons to grow and shrink to fit, ensuring equal width */
-            min-width: 0; /* Allow shrinking below content if needed */
+            gap: 1px; /* Reduced gap between icon and text */
+            flex: 0 0 19%; /* Allow 5 buttons per row (100% / 5 = 20%, slightly less for spacing) */
+            max-width: 19%; /* Max width to ensure 5 per row */
+            box-sizing: border-box; /* Include padding in width calculation */
             text-align: center;
             white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden; /* Hide overflowing text */
+            text-overflow: ellipsis; /* Add ellipsis for overflowing text */
         }
         .nav-button:hover {
             background-color: #4a5568;
@@ -152,7 +157,7 @@
             color: white;
         }
         .nav-button-icon {
-            font-size: 1.2rem; /* Smaller icon size */
+            font-size: 1.1rem; /* Smaller icon size */
         }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
@@ -171,6 +176,7 @@
 
     <!-- Navigation Bar -->
     <div class="navbar">
+        <!-- Row 1 -->
         <button class="nav-button active" onclick="openTelegramWebApp('main')">
             <span class="nav-button-icon">🏠</span> <!-- Home icon -->
             Главная
@@ -191,8 +197,25 @@
             <span class="nav-button-icon">📊</span> <!-- Stats icon -->
             Статистика
         </button>
+        <!-- Row 2 - New Tabs -->
+        <button class="nav-button" onclick="openTelegramWebApp('improvements')">
+            <span class="nav-button-icon">✨</span> <!-- Sparkle/Improvement icon -->
+            Улучшения
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('games')">
+            <span class="nav-button-icon">🎮</span> <!-- Game controller icon -->
+            Игры
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('about')">
+            <span class="nav-button-icon">ℹ️</span> <!-- Info icon -->
+            Об игре
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('withdraw')">
+            <span class="nav-button-icon">💸</span> <!-- Money wings/Withdraw icon -->
+            Вывод
+        </button>
         <button class="nav-button" onclick="openTelegramWebApp('settings')">
-            <span class="nav-button-icon">⚙️</span> <!-- Settings icon -->
+            <span class="nav-button-icon">⚙️</span> <!-- Settings icon (already existed, moved to second row for even distribution) -->
             Настройки
         </button>
     </div>
