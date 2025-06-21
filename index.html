@@ -216,6 +216,43 @@
             font-size: 1rem;
             margin-top: 10px;
         }
+        /* --- Styles for sub-tabs within 'About' page --- */
+        .sub-navbar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background-color: rgba(60, 70, 80, 0.8); /* Slightly lighter background for sub-navbar */
+            padding: 5px 0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .sub-nav-button {
+            background-color: transparent;
+            border: none;
+            color: #cbd5e0;
+            font-size: 0.9rem;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            flex-grow: 1; /* Make buttons fill space */
+            text-align: center;
+        }
+        .sub-nav-button:hover {
+            background-color: #4a5568;
+            color: white;
+        }
+        .sub-nav-button.active {
+            background-color: #3b82f6; /* Highlight active sub-button */
+            color: white;
+        }
+        .sub-page-content {
+            display: none; /* Hidden by default */
+            width: 100%;
+        }
+        .sub-page-content.active {
+            display: block; /* Show active sub-page */
+        }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
@@ -276,13 +313,18 @@
     <!-- About Page Content (Об игре) -->
     <div id="aboutPage" class="page-content">
         <h2 class="text-3xl font-bold text-teal-300 game-font">Об игре</h2>
-        <p class="generic-page-content">
+        <div class="sub-navbar">
+            <button class="sub-nav-button active" data-subpage="news">Новости</button>
+            <button class="sub-nav-button" data-subpage="description">Описание игры</button>
+        </div>
+        <div id="newsSubPage" class="sub-page-content active generic-page-content">
             <span class="sub-heading">Новости</span><br>
             <span class="sub-text">Следите за обновлениями!</span>
-            <br><br>
+        </div>
+        <div id="descriptionSubPage" class="sub-page-content generic-page-content">
             <span class="sub-heading">Описание игры</span><br>
-            <span class="sub-text">Простая, но затягивающая тапалка с элементами монетизации.</span>
-        </p>
+            <span class="sub-text">Погрузись в мир TapMoney! Эта увлекательная игра позволит тебе зарабатывать TapCoins, просматривая рекламу и улучшая свой множитель клика. Строй империю TapCoins и стань самым богатым игроком!</span>
+        </div>
     </div>
 
     <!-- Withdraw Page Content (Вывод) -->
@@ -363,6 +405,9 @@
         const upgradeTimerDisplay = document.getElementById('upgradeTimerDisplay');
         const upgradeLoadingText = document.getElementById('upgradeLoadingText');
 
+        // --- About Page Sub-Tab Elements ---
+        const aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
+        const aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
 
         let score = 0;
         let tapCoinsPerAd = 1.00; // Initial value for coins per ad
@@ -394,52 +439,73 @@
                 }
             });
 
-            // If navigating back to main page, ensure game state is correct
+            // Reset states for main game elements when switching pages
+            clickButton.disabled = true;
+            loadingText.textContent = "";
+            timerDisplay.classList.add('hidden');
+
+            // Reset states for upgrade elements
+            if (upgradeClickButton) {
+                upgradeClickButton.disabled = true;
+                upgradeLoadingText.textContent = "";
+                upgradeTimerDisplay.classList.add('hidden');
+            }
+
+            // Specific logic based on the page being shown
             if (pageId === 'mainPage') {
                 loadGameData(); // Load all game data (score and multiplier)
-                // Ensure main click button is enabled if not already in timer state
+                // Enable main click button if not already in timer state
                 if (!timerDisplay.classList.contains('hidden') || loadingText.textContent !== "") {
                     clickButton.disabled = true; // Still disabled if ad is loading/timer running
                 } else {
                     clickButton.disabled = false;
                 }
             } else if (pageId === 'improvementsPage') {
-                // For improvements page, disable main game button and enable upgrade button
-                clickButton.disabled = true;
-                loadingText.textContent = ""; // Clear main loading text
-                timerDisplay.classList.add('hidden'); // Hide main timer
-
-                // Reset upgrade button state if returning to page
-                if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
+                // For improvements page, enable upgrade button if not already in timer state
+                 if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
                     upgradeClickButton.disabled = true; // Still disabled if ad is loading/timer running
                 } else {
                     upgradeClickButton.disabled = false;
-                    upgradeLoadingText.textContent = "";
-                    upgradeTimerDisplay.classList.add('hidden');
                 }
-
-            }
-             else {
-                // For other pages, disable main game button and clear messages
-                clickButton.disabled = true;
-                loadingText.textContent = ""; // Clear main loading text
-                timerDisplay.classList.add('hidden'); // Hide main timer
-
-                // Also disable upgrade button if it exists and is on a non-main/non-improvements page
-                if (upgradeClickButton) {
-                    upgradeClickButton.disabled = true;
-                    upgradeLoadingText.textContent = "";
-                    upgradeTimerDisplay.classList.add('hidden');
-                }
+            } else if (pageId === 'aboutPage') {
+                // Ensure default sub-page is shown in 'About'
+                showSubPage('newsSubPage');
             }
             currentPageId = pageId; // Update current page
         }
 
-        // Add event listeners to navigation buttons
+        // Function to show a specific sub-page within 'About'
+        function showSubPage(subPageId) {
+            aboutSubPages.forEach(subPage => {
+                if (subPage.id === subPageId) {
+                    subPage.classList.add('active');
+                } else {
+                    subPage.classList.remove('active');
+                }
+            });
+            aboutSubNavButtons.forEach(button => {
+                if (button.dataset.subpage + 'SubPage' === subPageId) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+
+        // Add event listeners to main navigation buttons
         navButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const pageToShow = button.dataset.page + 'Page';
                 showPage(pageToShow);
+            });
+        });
+
+        // Add event listeners to 'About' sub-navigation buttons
+        aboutSubNavButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const subPageToShow = button.dataset.subpage + 'SubPage';
+                showSubPage(subPageToShow);
             });
         });
 
@@ -536,7 +602,7 @@
 
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval); // Stop the timer
-                        score += tapCoinsPerAd; // Add current multiplier value to score
+                        score = parseFloat((score + tapCoinsPerAd).toFixed(2)); // Add current multiplier value to score
                         scoreDisplay.textContent = score.toFixed(2); // Update score display
                         clickButton.disabled = false; // Activate button
                         timerDisplay.classList.add('hidden'); // Hide timer
