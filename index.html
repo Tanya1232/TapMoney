@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TapMoney</title>
-    <!-- Google Fonts - 'Press Start 2P' for pixelated/gamey feel, 'Inter' for fallback -->
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Google Fonts - 'Bangers' for a cartoony/gamey feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
     <!-- Tailwind CSS import -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -14,24 +14,25 @@
             background-color: #1a202c; /* Solid dark background */
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Distribute space for header, content, footer */
+            justify-content: space-between; /* Space out header, content, footer */
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px 0 0 0; /* Padding only at top for main content */
+            padding: 0; /* Remove body padding, elements within will have their own spacing */
             box-sizing: border-box;
             color: #e2e8f0; /* Light text */
             overflow: hidden; /* Prevent scrolling if elements slightly overflow */
             position: relative; /* For absolute positioning of navbar */
         }
-        /* Override default font for specific elements to use 'Press Start 2P' */
+        /* Apply 'Bangers' font to game-specific elements */
         .game-font {
-            font-family: 'Press Start 2P', cursive;
+            font-family: 'Bangers', cursive;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Add some shadow for readability */
         }
 
         .score-text {
-            font-size: 2.5rem; /* Reduced font size for score */
-            font-weight: bold;
+            font-size: 2.2rem; /* Further reduced font size for score */
+            font-weight: normal; /* Bangers is already bold, no need for extra bold */
             color: #68d391; /* Green for score */
             margin-bottom: 20px; /* Space below score */
             text-align: center;
@@ -86,23 +87,25 @@
         }
 
         /* Main content area to center the button and score vertically */
-        #mainContent {
+        #gameScreen { /* Adjusted to be the main flex container for score, button, timer, loading */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: center; /* Center content vertically */
             align-items: center;
             flex-grow: 1; /* Allows it to take up available vertical space */
             width: 100%;
+            padding-bottom: 70px; /* Space for the fixed navbar */
+            box-sizing: border-box;
         }
 
         /* Navbar styles */
         .navbar {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-around; /* Distribute items evenly with space around them */
             align-items: center;
             width: 100%;
             background-color: #2d3748; /* Darker background for navbar */
-            padding: 10px 0;
+            padding: 8px 0; /* Reduced padding */
             position: fixed; /* Fix at the bottom */
             bottom: 0;
             left: 0;
@@ -113,15 +116,19 @@
             background-color: transparent;
             border: none;
             color: #cbd5e0;
-            font-size: 0.9rem;
-            padding: 8px 10px;
-            border-radius: 8px;
+            font-size: 0.75rem; /* Smaller font size for button text */
+            padding: 6px 5px; /* Reduced padding */
+            border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px; /* Reduced gap between icon and text */
+            flex: 1; /* Allow buttons to grow and shrink to fit, ensuring equal width */
+            min-width: 0; /* Allow shrinking below content if needed */
+            text-align: center;
+            white-space: nowrap; /* Prevent text wrapping */
         }
         .nav-button:hover {
             background-color: #4a5568;
@@ -132,7 +139,7 @@
             color: white;
         }
         .nav-button-icon {
-            font-size: 1.5rem; /* Icon size */
+            font-size: 1.2rem; /* Smaller icon size */
         }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
@@ -140,11 +147,9 @@
 </head>
 <body>
     <!-- Game Screen -->
-    <div id="gameScreen" class="flex flex-col items-center justify-center w-full min-h-screen">
+    <div id="gameScreen">
         <p class="score-text game-font">TapCoins: <span id="score">0</span></p>
-        <div id="mainContent">
-            <button id="clickButton" class="click-button" disabled>Загрузка...</button>
-        </div>
+        <button id="clickButton" class="click-button" disabled>Загрузка...</button>
         <p id="timerDisplay" class="timer-text hidden"></p>
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
     </div>
@@ -197,17 +202,8 @@
             // Example: if (page === 'shop') url = 'https://tanya1232.github.io/TapMoney/shop.html';
 
             if (TelegramWebApp) {
-                // For a multi-page app within Telegram WebApp context,
-                // you would typically navigate within the same WebApp instance
-                // or open new WebApp instances as needed.
-                // For now, opening main index.html for all buttons.
                 console.log(`Opening WebApp page: ${page} with URL: ${url}`);
-                // This will effectively reload the current WebApp with the new URL
-                // if it's within the same domain and context.
-                // For true new tabs, Telegram WebApp API has specific methods
-                // like openLink() which opens in external browser if not WebApp.
-                // For a multi-screen WebApp, you'd manage state/views internally.
-                TelegramWebApp.openLink(url); // Opens in default browser/webapp context
+                TelegramWebApp.openLink(url);
             } else {
                 console.warn(`Telegram WebApp not found. Cannot open page: ${page}. Attempting direct browser open.`);
                 window.open(url, '_blank'); // Fallback for testing outside Telegram
@@ -215,9 +211,11 @@
 
             // Remove active class from all nav buttons
             document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-            // Add active class to the clicked button (simplistic, can be improved for real routing)
-            // Note: This won't persist across actual page reloads/navigations
-            event.currentTarget.classList.add('active');
+            // Add active class to the clicked button (simplistic, won't persist across actual page reloads/navigations)
+            // event.currentTarget is null if called without event, so check
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
         }
         window.openTelegramWebApp = openTelegramWebApp; // Make global for onclick
 
