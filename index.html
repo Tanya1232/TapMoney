@@ -278,7 +278,7 @@
         </button>
         <p id="timerDisplay" class="timer-text hidden"></p>
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
-        <p id="accumulatedPassiveIncomeDisplay" class="sub-text mt-4 game-font" style="font-size: 1.1rem; color: #a0f0a0;">Накоплено: 0.00 TapCoins</p>
+        <p id="accumulatedPassiveIncomeDisplay" class="sub-text mt-4 game-font" style="font-size: 1.1rem; color: #a0f0a0;">Накоплено: <span id="accumulatedValue">0.000</span> TapCoins</p>
         <button id="claimPassiveIncomeButton" class="upgrade-button mt-2" style="background-color: #007bff; /* Blue for claim button */">Забрать пассивный доход</button>
     </div>
 
@@ -448,7 +448,7 @@
     <script type="module">
         // Импорт модулей Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, query, collection, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Конфигурация Firebase для вашего веб-приложения (ваша конфигурация, полученная из Firebase Console)
@@ -478,6 +478,7 @@
         const clickButton = document.getElementById('clickButton');
         const timerDisplay = document.getElementById('timerDisplay');
         const loadingText = document.getElementById('loadingText');
+        const accumulatedValueDisplay = document.getElementById('accumulatedValue'); // Элемент для отображения накопленной суммы
 
         // --- Элементы страницы улучшений ---
         const upgradeClickButton = document.getElementById('upgradeClickButton');
@@ -725,10 +726,15 @@
                 const elapsedTimeMs = currentTime - lastLoginTimestamp;
                 const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); 
 
+                console.log(`loadGameData Debug: lastLoginTimestamp: ${new Date(lastLoginTimestamp).toLocaleString()}, currentTime: ${new Date(currentTime).toLocaleString()}`);
+                console.log(`loadGameData Debug: elapsedTimeMs: ${elapsedTimeMs}, elapsedTimeHours: ${elapsedTimeHours.toFixed(4)}`);
+                console.log(`loadGameData Debug: passiveIncomeRate: ${passiveIncomeRate.toFixed(3)}, initial accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
+
+
                 if (passiveIncomeRate > 0 && elapsedTimeHours > 0) {
                     const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
-                    accumulatedPassiveIncome = parseFloat((accumulatedPassiveIncome + newlyAccumulated).toFixed(2));
-                    console.log(`loadGameData: Накоплен пассивный доход: ${newlyAccumulated.toFixed(2)} TapCoins за ${elapsedTimeHours.toFixed(2)} часов (Всего: ${accumulatedPassiveIncome.toFixed(2)})`);
+                    accumulatedPassiveIncome = accumulatedPassiveIncome + newlyAccumulated; // Убрали parseFloat и toFixed
+                    console.log(`loadGameData Debug: newlyAccumulated: ${newlyAccumulated.toFixed(4)}, final accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
                 }
                 lastLoginTimestamp = currentTime; // Обновление времени последнего входа
 
@@ -760,7 +766,7 @@
                     tapCoinsPerAd: tapCoinsPerAd,
                     passiveIncomeRate: passiveIncomeRate,
                     lastLoginTimestamp: lastLoginTimestamp,
-                    accumulatedPassiveIncome: accumulatedPassiveIncome,
+                    accumulatedPassiveIncome: accumulatedPassiveIncome, // Сохраняем без toFixed
                     invitedBy: invitedBy, // Сохраняем ID пригласившего
                     completedTasks: completedTasks // Сохраняем выполненные задания
                 };
@@ -777,8 +783,10 @@
             tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
             // Проверяем существование элементов перед обновлением
             if (passiveIncomeRateDisplay) passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
-            if (accumulatedPassiveIncomeDisplay) accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`;
-            if (claimPassiveIncomeButton) claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome <= 0);
+            
+            // Отображаем накопленную сумму с тремя знаками после запятой
+            if (accumulatedValueDisplay) accumulatedValueDisplay.textContent = accumulatedPassiveIncome.toFixed(3); 
+            if (claimPassiveIncomeButton) claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome < 0.001); // Позволяем забрать, если больше 0.001
 
             if (passiveIncomeRateDisplayImp) {
                 passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
@@ -1092,12 +1100,14 @@
         if (claimPassiveIncomeButton) {
             claimPassiveIncomeButton.addEventListener('click', async () => { 
                 console.log("Claim passive income button clicked.");
-                if (accumulatedPassiveIncome > 0) {
+                if (accumulatedPassiveIncome > 0.0001) { // Увеличиваем порог, чтобы избежать проблем с плавающей точкой
                     score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
                     accumulatedPassiveIncome = 0; 
                     updateDisplays(); 
                     await saveGameData(); 
                     console.log("Пассивный доход забран!");
+                } else {
+                    console.log("Нет накопленного пассивного дохода для забирания.");
                 }
             });
         }
