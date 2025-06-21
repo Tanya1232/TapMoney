@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TapMoney</title>
-    <!-- Google Fonts - 'Bangers' for a cartoony/gamey feel -->
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+    <!-- Google Fonts - 'Bangers' for a cartoony/gamey feel, 'Press Start 2P' for pixelated/gamey feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- Tailwind CSS import -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -33,6 +33,11 @@
         .game-font {
             font-family: 'Bangers', cursive;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* Stronger shadow for readability on image background */
+        }
+        /* Apply 'Press Start 2P' for pixelated/game scores */
+        .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
 
         /* --- Common Page Styles --- */
@@ -260,23 +265,31 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            max-width: 350px; /* Constrain width for better mobile fit */
+            width: 90%; /* Make container take more width */
+            max-width: 400px; /* Max width for larger screens, but responsive */
             background-color: rgba(0, 0, 0, 0.7); /* Darker background for game area */
             border-radius: 10px;
             padding: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px; /* Space between game and sub-buttons */
         }
         #snakeCanvas {
             background-color: #000; /* Black background for the game */
             border: 2px solid #5a67d8; /* Blue border for the game area */
             border-radius: 8px;
             touch-action: none; /* Prevent default touch actions like scrolling/zooming */
+            /* Dynamic width/height will be set by JS based on container */
+            width: 100%; /* Make canvas responsive to its container */
+            height: auto; /* Maintain aspect ratio */
+            aspect-ratio: 1 / 1; /* Ensure it's square */
         }
         .snake-game-controls {
             display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+            justify-content: center;
             gap: 15px;
             margin-top: 20px;
+            width: 100%;
         }
         .snake-game-button {
             background-color: #48bb78;
@@ -287,17 +300,23 @@
             cursor: pointer;
             font-size: 1rem;
             transition: background-color 0.2s;
+            flex: 1 1 auto; /* Allow buttons to grow/shrink, distribute space */
+            min-width: 120px; /* Minimum width to keep them readable */
         }
         .snake-game-button:hover {
             background-color: #38a169;
+        }
+        .snake-game-button:disabled {
+            background-color: #6b7280;
+            cursor: not-allowed;
         }
         .snake-game-score {
             font-size: 1.8rem;
             color: #68d391;
             margin-bottom: 10px;
-            font-family: 'Press Start 2P', cursive;
+            font-family: 'Press Start 2P', cursive; /* Use pixel font */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            background-color: rgba(0, 0, 0, 0.7); /* Darker semi-transparent background */
             padding: 5px 10px;
             border-radius: 5px;
             width: fit-content;
@@ -306,9 +325,9 @@
             font-size: 1.2rem;
             color: #f6ad55;
             margin-top: 10px;
-            font-family: 'Press Start 2P', cursive;
+            font-family: 'Press Start 2P', cursive; /* Use pixel font */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            background-color: rgba(0, 0, 0, 0.7); /* Darker semi-transparent background */
             padding: 5px 10px;
             border-radius: 5px;
             width: fit-content;
@@ -316,8 +335,8 @@
         #snakeCoinsEarned {
             color: #68d391; /* Green for earned coins */
             font-size: 1.4rem; /* Slightly larger for emphasis */
+            margin-top: 5px; /* Add margin to separate from status */
         }
-
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
@@ -380,16 +399,16 @@
         </div>
 
         <!-- Snake Game Sub-Page -->
-        <div id="snakeSubPage" class="sub-page-content active generic-page-content">
+        <div id="snakeSubPage" class="sub-page-content active flex flex-col items-center justify-center">
             <div id="snakeGameContainer">
-                <p class="snake-game-score game-font">Очки: <span id="snakeScore">0</span></p>
+                <p class="snake-game-score pixel-font">Очки: <span id="snakeScore">0</span></p>
                 <canvas id="snakeCanvas" width="300" height="300"></canvas>
                 <div class="snake-game-controls">
                     <button id="snakeStartButton" class="snake-game-button">Начать игру</button>
                     <button id="snakeRestartButton" class="snake-game-button" disabled>Перезапустить</button>
                 </div>
-                <p id="snakeStatus" class="snake-game-status"></p>
-                <p id="snakeCoinsEarned" class="snake-game-status">Заработано: 0.00 TapCoins</p>
+                <p id="snakeStatus" class="snake-game-status pixel-font"></p>
+                <p id="snakeCoinsEarned" class="snake-game-status pixel-font">Заработано: 0.00 TapCoins</p>
             </div>
         </div>
 
@@ -524,11 +543,17 @@
         const localStorageTapCoinsPerAdKey = 'tapCoinsPerAdValue'; // Key for tapCoinsPerAd in localStorage
 
         // --- Snake Game Variables ---
-        const gridSize = 20; // Size of each snake segment and food
-        const tileCount = snakeCanvas.width / gridSize; // Number of tiles across the canvas
+        // Ensure canvas width/height are multiples of gridSize for clean drawing
+        const SNAKE_CANVAS_SIZE = 300; // Fixed size for game logic
+        const SNAKE_GRID_SIZE = 20; // Size of each snake segment and food
+        const SNAKE_TILE_COUNT = SNAKE_CANVAS_SIZE / SNAKE_GRID_SIZE; // Number of tiles across the canvas
+
+        snakeCanvas.width = SNAKE_CANVAS_SIZE;
+        snakeCanvas.height = SNAKE_CANVAS_SIZE;
+
         let snake = [];
         let food = {};
-        let dx = gridSize; // Initial direction (moving right)
+        let dx = SNAKE_GRID_SIZE; // Initial direction (moving right)
         let dy = 0;
         let snakeGameScore = 0;
         let snakeGameTapCoinsEarned = 0;
@@ -600,9 +625,8 @@
                 showSubPage('newsSubPage');
             } else if (pageId === 'gamesPage') {
                 // When entering games page, show the default game (Snake)
-                showGamesSubPage('snakeSubPage');
-                // Initialize snake game if not already running (or reset it)
-                initializeSnakeGame();
+                showGamesSubPage('snakeSubPage'); // Make sure snake sub-page is active
+                initializeSnakeGame(); // Initialize the game
             }
             currentPageId = pageId; // Update current page
         }
@@ -825,12 +849,12 @@
             snakeStatusDisplay.textContent = "Нажмите 'Начать игру'";
             snakeStartButton.disabled = false;
             snakeRestartButton.disabled = true;
-            drawSnakeAndFood(); // Draw initial state
+            // No need to draw here, will be drawn on start
         }
 
         function resetSnakeGame() {
-            snake = [{ x: 10 * gridSize, y: 10 * gridSize }]; // Start in the middle
-            dx = gridSize; // Initial direction (moving right)
+            snake = [{ x: 10 * SNAKE_GRID_SIZE, y: 10 * SNAKE_GRID_SIZE }]; // Start in the middle
+            dx = SNAKE_GRID_SIZE; // Initial direction (moving right)
             dy = 0;
             snakeGameScore = 0;
             snakeGameTapCoinsEarned = 0;
@@ -840,12 +864,13 @@
             if (gameInterval) clearInterval(gameInterval); // Clear any existing interval
             gameRunning = false;
             changingDirection = false;
+            snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height); // Clear canvas
         }
 
         function generateFood() {
             food = {
-                x: Math.floor(Math.random() * tileCount) * gridSize,
-                y: Math.floor(Math.random() * tileCount) * gridSize
+                x: Math.floor(Math.random() * SNAKE_TILE_COUNT) * SNAKE_GRID_SIZE,
+                y: Math.floor(Math.random() * SNAKE_TILE_COUNT) * SNAKE_GRID_SIZE
             };
             // Ensure food does not spawn on the snake
             for (let i = 0; i < snake.length; i++) {
@@ -859,19 +884,19 @@
         function drawSnakeAndFood() {
             snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height);
 
+            // Draw food first (so snake draws over it if same cell)
+            snakeCtx.fillStyle = '#FFC107'; // Yellow food
+            snakeCtx.fillRect(food.x, food.y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
+            snakeCtx.strokeStyle = '#FF8F00'; // Darker yellow border
+            snakeCtx.strokeRect(food.x, food.y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
+
             // Draw snake
             for (let i = 0; i < snake.length; i++) {
                 snakeCtx.fillStyle = (i === 0) ? '#4CAF50' : '#8BC34A'; // Head green, body light green
-                snakeCtx.fillRect(snake[i].x, snake[i].y, gridSize, gridSize);
+                snakeCtx.fillRect(snake[i].x, snake[i].y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
                 snakeCtx.strokeStyle = '#2E7D32'; // Darker green border
-                snakeCtx.strokeRect(snake[i].x, snake[i].y, gridSize, gridSize);
+                snakeCtx.strokeRect(snake[i].x, snake[i].y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
             }
-
-            // Draw food
-            snakeCtx.fillStyle = '#FFC107'; // Yellow food
-            snakeCtx.fillRect(food.x, food.y, gridSize, gridSize);
-            snakeCtx.strokeStyle = '#FF8F00'; // Darker yellow border
-            snakeCtx.strokeRect(food.x, food.y, gridSize, gridSize);
         }
 
         function updateSnakeGame() {
@@ -913,8 +938,13 @@
         }
 
         function changeDirection(event) {
-            if (changingDirection || !gameRunning) return; // Ignore if already changing or game not running
-            changingDirection = true;
+            // Only respond to key events if on snake game sub-page and game is running
+            if (!(currentPageId === 'gamesPage' && gamesSubPages[0].classList.contains('active') && gameRunning)) {
+                return;
+            }
+
+            // Prevent default scroll behavior for arrow keys
+            event.preventDefault();
 
             const keyPressed = event.keyCode;
             const LEFT_KEY = 37;
@@ -922,23 +952,23 @@
             const RIGHT_KEY = 39;
             const DOWN_KEY = 40;
 
-            const goingUp = dy === -gridSize;
-            const goingDown = dy === gridSize;
-            const goingLeft = dx === -gridSize;
-            const goingRight = dx === gridSize;
+            const goingUp = dy === -SNAKE_GRID_SIZE;
+            const goingDown = dy === SNAKE_GRID_SIZE;
+            const goingLeft = dx === -SNAKE_GRID_SIZE;
+            const goingRight = dx === SNAKE_GRID_SIZE;
 
             if (keyPressed === LEFT_KEY && !goingRight) {
-                dx = -gridSize;
+                dx = -SNAKE_GRID_SIZE;
                 dy = 0;
             } else if (keyPressed === UP_KEY && !goingDown) {
                 dx = 0;
-                dy = -gridSize;
+                dy = -SNAKE_GRID_SIZE;
             } else if (keyPressed === RIGHT_KEY && !goingLeft) {
-                dx = gridSize;
+                dx = SNAKE_GRID_SIZE;
                 dy = 0;
             } else if (keyPressed === DOWN_KEY && !goingUp) {
                 dx = 0;
-                dy = gridSize;
+                dy = SNAKE_GRID_SIZE;
             }
         }
 
@@ -970,22 +1000,22 @@
                 const minSwipeDistance = 20; // Minimum distance for a swipe to register
 
                 if (Math.abs(dxTouch) > minSwipeDistance || Math.abs(dyTouch) > minSwipeDistance) {
-                    const goingUp = dy === -gridSize;
-                    const goingDown = dy === gridSize;
-                    const goingLeft = dx === -gridSize;
-                    const goingRight = dx === gridSize;
+                    const goingUp = dy === -SNAKE_GRID_SIZE;
+                    const goingDown = dy === SNAKE_GRID_SIZE;
+                    const goingLeft = dx === -SNAKE_GRID_SIZE;
+                    const goingRight = dx === SNAKE_GRID_SIZE;
 
                     if (Math.abs(dxTouch) > Math.abs(dyTouch)) { // Horizontal swipe
                         if (dxTouch > 0 && !goingLeft) {
-                            dx = gridSize; dy = 0; // Right
+                            dx = SNAKE_GRID_SIZE; dy = 0; // Right
                         } else if (dxTouch < 0 && !goingRight) {
-                            dx = -gridSize; dy = 0; // Left
+                            dx = -SNAKE_GRID_SIZE; dy = 0; // Left
                         }
                     } else { // Vertical swipe
                         if (dyTouch > 0 && !goingUp) {
-                            dx = 0; dy = gridSize; // Down
+                            dx = 0; dy = SNAKE_GRID_SIZE; // Down
                         } else if (dyTouch < 0 && !goingDown) {
-                            dx = 0; dy = -gridSize; // Up
+                            dx = 0; dy = -SNAKE_GRID_SIZE; // Up
                         }
                     }
                 }
@@ -1024,6 +1054,8 @@
                 clearInterval(gameInterval);
                 gameRunning = false;
                 snakeStatusDisplay.textContent = "Игра приостановлена.";
+                snakeStartButton.disabled = false;
+                snakeRestartButton.disabled = false;
             }
         }
 
