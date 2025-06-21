@@ -258,6 +258,11 @@
         .sub-page-content.active {
             display: block; /* Show active sub-page */
         }
+        .referral-info-text {
+            font-size: 1rem;
+            color: #cbd5e0;
+            margin-top: 10px;
+        }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
@@ -292,7 +297,17 @@
     <!-- Friends Page Content (Друзья) -->
     <div id="friendsPage" class="page-content">
         <h2 class="text-3xl font-bold text-blue-300 game-font">Друзья</h2>
-        <p class="generic-page-content">Пригласи друзей и играй вместе!</p>
+        <div class="generic-page-content flex flex-col items-center">
+            <p class="referral-info-text">Твой реферальный ID: <span id="referralIdDisplay">Загрузка...</span></p>
+            <p class="referral-info-text">Тебя пригласил: <span id="invitedByDisplay">Нет</span></p>
+            <button id="copyReferralLinkButton" class="upgrade-button mt-4" style="background-color: #6b46c1;">Скопировать ссылку</button>
+            <div id="referralStatus" class="referral-info-text mt-2 text-green-400 hidden">Ссылка скопирована!</div>
+            <h3 class="sub-heading mt-6">Приглашенные друзья:</h3>
+            <ul id="referredUsersList" class="sub-text mt-2 text-left w-full max-w-xs mx-auto">
+                <!-- Referred users will be listed here -->
+                <li id="noReferredUsers" class="text-center text-gray-500">Пока нет приглашенных друзей.</li>
+            </ul>
+        </div>
     </div>
 
     <!-- Stats Page Content (Статистика) -->
@@ -412,7 +427,7 @@
         // Импорт модулей Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, query, collection, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Конфигурация Firebase для вашего веб-приложения (ваша конфигурация, полученная из Firebase Console)
         const firebaseConfig = {
@@ -431,6 +446,7 @@
         let auth;
         let userId;
         // Глобальный ID приложения из окружения Canvas. Используем его, если он доступен, иначе наш projectId.
+        // Для развернутых приложений на GitHub Pages, __app_id может быть не определен, поэтому используем firebaseConfig.projectId.
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; 
         let isAuthReady = false; // Флаг готовности аутентификации
 
@@ -459,6 +475,14 @@
         const aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
         const aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
 
+        // --- Элементы для реферальной программы ---
+        const referralIdDisplay = document.getElementById('referralIdDisplay');
+        const invitedByDisplay = document.getElementById('invitedByDisplay');
+        const copyReferralLinkButton = document.getElementById('copyReferralLinkButton');
+        const referralStatus = document.getElementById('referralStatus');
+        const referredUsersList = document.getElementById('referredUsersList');
+        const noReferredUsers = document.getElementById('noReferredUsers');
+
         // Игровые данные
         let score = 0;
         let tapCoinsPerAd = 1.00; // Начальное значение монет за рекламу
@@ -466,6 +490,10 @@
         let passiveIncomeRate = 0.000; // TapCoins в час
         let lastLoginTimestamp = Date.now(); // Время последнего входа в приложение
         let accumulatedPassiveIncome = 0; // Накопленный доход с последнего входа
+        let invitedBy = null; // ID пользователя, который пригласил текущего пользователя
+        const NEW_USER_BONUS = 100; // Бонус для нового пользователя, пришедшего по реферальной ссылке
+        const REFERRER_BONUS = 50; // Бонус для реферера за каждого приглашенного
+
 
         // --- Управление вкладками/страницами ---
         const navButtons = document.querySelectorAll('.nav-button');
@@ -498,6 +526,8 @@
             if (upgradeTimerDisplay) upgradeTimerDisplay.classList.add('hidden');
             if (passiveIncomeLoadingText) passiveIncomeLoadingText.textContent = "";
             if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
+            // Скрыть сообщение о копировании ссылки
+            referralStatus.classList.add('hidden');
 
             // Специфическая логика в зависимости от отображаемой страницы
             if (pageId === 'mainPage') {
@@ -525,6 +555,9 @@
             } else if (pageId === 'aboutPage') {
                 // Убедиться, что подстраница по умолчанию отображается в "Об игре"
                 showSubPage('newsSubPage');
+            } else if (pageId === 'friendsPage') {
+                // Загрузить и отобразить информацию о реферальной программе
+                updateReferralDisplays();
             }
             currentPageId = pageId; // Обновить текущую страницу
         }
@@ -581,6 +614,7 @@
                 const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
                 const docSnap = await getDoc(userDocRef);
 
+                let isNewUser = false;
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     score = parseFloat(data.score || 0);
@@ -588,16 +622,33 @@
                     passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
                     lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
                     accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
+                    invitedBy = data.invitedBy || null; // Загружаем ID пригласившего
                     console.log("loadGameData: Игровые данные загружены из Firestore:", data);
                 } else {
                     console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
+                    isNewUser = true;
                     score = 0;
                     tapCoinsPerAd = 1.00;
                     passiveIncomeRate = 0.000;
                     lastLoginTimestamp = Date.now();
                     accumulatedPassiveIncome = 0;
-                    await saveGameData(); // Сохраняем данные по умолчанию для нового пользователя
+                    invitedBy = null; // По умолчанию нет пригласившего
                 }
+
+                // Обработка реферальной программы при первом входе нового пользователя
+                const urlParams = new URLSearchParams(window.location.search);
+                const initialReferrerId = urlParams.get('startapp'); // Получаем ID реферера из URL
+
+                if (isNewUser && initialReferrerId && initialReferrerId !== userId) {
+                    // Если это новый пользователь и есть реферер в URL, и реферер не сам пользователь
+                    invitedBy = initialReferrerId; // Устанавливаем пригласившего
+                    score = parseFloat((score + NEW_USER_BONUS).toFixed(2)); // Начисляем бонус новому пользователю
+                    console.log(`Новый пользователь приглашен ${initialReferrerId}. Бонус ${NEW_USER_BONUS} TapCoins начислен.`);
+                    
+                    // Теперь награждаем реферера
+                    await awardReferralBonusToReferrer(initialReferrerId, userId);
+                }
+
 
                 // Расчет пассивного дохода, заработанного с последнего входа
                 const currentTime = Date.now();
@@ -610,6 +661,8 @@
                     console.log(`loadGameData: Накоплен пассивный доход: ${newlyAccumulated.toFixed(2)} TapCoins за ${elapsedTimeHours.toFixed(2)} часов (Всего: ${accumulatedPassiveIncome.toFixed(2)})`);
                 }
                 lastLoginTimestamp = currentTime; // Обновление времени последнего входа
+
+                await saveGameData(); // Сохраняем обновленные данные (включая invitedBy и начальный бонус)
 
                 updateDisplays(); // Обновление всех элементов интерфейса
 
@@ -637,7 +690,8 @@
                     tapCoinsPerAd: tapCoinsPerAd,
                     passiveIncomeRate: passiveIncomeRate,
                     lastLoginTimestamp: lastLoginTimestamp,
-                    accumulatedPassiveIncome: accumulatedPassiveIncome
+                    accumulatedPassiveIncome: accumulatedPassiveIncome,
+                    invitedBy: invitedBy // Сохраняем ID пригласившего
                 };
                 await setDoc(userDocRef, dataToSave, { merge: true }); 
                 console.log("saveGameData: Игровые данные сохранены в Firestore:", dataToSave);
@@ -658,7 +712,124 @@
             if (passiveIncomeRateDisplayImp) {
                 passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
             }
+
+            // Обновление реферальных полей
+            if (referralIdDisplay) referralIdDisplay.textContent = userId; // Ваш собственный ID для реферальной ссылки
+            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет";
+
+            // Обновление списка приглашенных друзей
+            if (currentPageId === 'friendsPage') {
+                updateReferredUsersList();
+            }
         }
+
+        // --- Логика реферальной программы ---
+        async function awardReferralBonusToReferrer(referrerId, referredUserId) {
+            if (!db || !referrerId || !referredUserId || referrerId === userId) {
+                console.warn("awardReferralBonusToReferrer: Неверные параметры или реферер - сам пользователь.");
+                return;
+            }
+
+            try {
+                const referrerRef = doc(db, "artifacts", appId, "users", referrerId, "gameData", "progress");
+                const referralRecordRef = doc(db, "artifacts", appId, "users", referrerId, "referrals", referredUserId);
+
+                // Используем транзакцию для атомарности операций
+                await runTransaction(db, async (transaction) => {
+                    const referrerDoc = await transaction.get(referrerRef);
+                    const referralRecordDoc = await transaction.get(referralRecordRef);
+
+                    if (!referrerDoc.exists()) {
+                        console.warn(`awardReferralBonusToReferrer: Реферер с ID ${referrerId} не найден.`);
+                        return;
+                    }
+
+                    if (referralRecordDoc.exists()) {
+                        console.log(`awardReferralBonusToReferrer: Бонус для ${referredUserId} уже выдан рефереру ${referrerId}. Пропускаем.`);
+                        return;
+                    }
+
+                    // Обновляем счет реферера
+                    const currentReferrerScore = parseFloat(referrerDoc.data().score || 0);
+                    const newReferrerScore = parseFloat((currentReferrerScore + REFERRER_BONUS).toFixed(2));
+                    transaction.update(referrerRef, { score: newReferrerScore });
+
+                    // Создаем запись о том, что бонус выдан
+                    transaction.set(referralRecordRef, { timestamp: Date.now() });
+
+                    console.log(`awardReferralBonusToReferrer: Бонус ${REFERRER_BONUS} TapCoins начислен рефереру ${referrerId} за приглашение ${referredUserId}.`);
+                });
+            } catch (error) {
+                console.error("awardReferralBonusToReferrer: Ошибка при начислении бонуса рефереру:", error);
+            }
+        }
+
+        async function updateReferredUsersList() {
+            if (!db || !userId) {
+                referredUsersList.innerHTML = '<li class="text-center text-gray-500">Ошибка загрузки друзей.</li>';
+                return;
+            }
+
+            referralIdDisplay.textContent = userId; // Убедиться, что ID реферера всегда отображается
+            invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет";
+
+            referredUsersList.innerHTML = ''; // Очищаем список
+            noReferredUsers.classList.remove('hidden'); // Показываем сообщение по умолчанию
+
+            try {
+                const usersCollectionRef = collection(db, "artifacts", appId, "users");
+                // Запрос всех документов пользователей, где 'invitedBy' равен текущему userId
+                // !!! ВНИМАНИЕ: Для этого запроса (where("gameData.progress.invitedBy", "==", userId)) может потребоваться создание индекса в Firestore.
+                // Если возникнет ошибка "The query requires an index...", нужно будет создать индекс вручную в консоли Firebase.
+                const q = query(usersCollectionRef, where("gameData.progress.invitedBy", "==", userId));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    console.log("У текущего пользователя нет приглашенных друзей.");
+                } else {
+                    noReferredUsers.classList.add('hidden'); // Скрываем сообщение
+                    querySnapshot.forEach((doc) => {
+                        const referredUserUID = doc.id; // UID приглашенного пользователя
+                        const referredUserName = `Пользователь ${referredUserUID.substring(0, 8)}...`; // Отображаем часть UID
+                        const listItem = document.createElement('li');
+                        listItem.className = 'py-1 border-b border-gray-700 last:border-b-0 text-white';
+                        listItem.textContent = referredUserName;
+                        referredUsersList.appendChild(listItem);
+                    });
+                    console.log(`Найдено приглашенных друзей: ${querySnapshot.size}`);
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки списка приглашенных друзей:", error);
+                referredUsersList.innerHTML = '<li class="text-center text-red-400">Ошибка загрузки списка друзей.</li>';
+            }
+        }
+
+        // Копирование реферальной ссылки
+        copyReferralLinkButton.addEventListener('click', async () => {
+            // WEB_APP_URL здесь должен соответствовать тому, что в bot.py, но мы формируем ссылку относительно текущего местоположения.
+            const referralLink = `${window.location.origin}${window.location.pathname}?startapp=${userId}`;
+            try {
+                // Используем document.execCommand('copy') для совместимости с iframe
+                const tempInput = document.createElement('textarea');
+                tempInput.value = referralLink;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                referralStatus.textContent = "Ссылка скопирована!";
+                referralStatus.classList.remove('hidden');
+                setTimeout(() => {
+                    referralStatus.classList.add('hidden');
+                }, 3000); // Скрыть сообщение через 3 секунды
+                console.log("Реферальная ссылка скопирована:", referralLink);
+            } catch (err) {
+                console.error("Ошибка копирования реферальной ссылки:", err);
+                referralStatus.textContent = "Ошибка при копировании ссылки.";
+                referralStatus.classList.remove('hidden');
+            }
+        });
+
 
         // --- Функции для рекламы и игровой логики ---
 
@@ -791,9 +962,6 @@
             try {
                 // Инициализация приложения Firebase, если оно еще не инициализировано
                 if (!app) {
-                    // Используем вашу конфигурацию firebaseConfig.
-                    // __firebase_config от Canvas окружения может быть полезен, но для простоты
-                    // и устранения проблем используем вашу явную конфигурацию.
                     if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
                         throw new Error("Конфигурация Firebase отсутствует или пуста.");
                     }
@@ -811,16 +979,11 @@
                     console.log("initializeFirebase: Firestore Firebase инициализирован.");
                 }
 
-                // Аутентификация пользователя только если он еще не аутентифицирован
+                // ВАЖНО: Для развернутых приложений на GitHub Pages, __initial_auth_token не используется.
+                // Мы всегда будем использовать анонимную аутентификацию для публичного доступа.
                 if (!auth.currentUser) {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                        console.log("initializeFirebase: Вход выполнен с пользовательским токеном.");
-                    } else {
-                        // Если токен не предоставлен (например, вне среды Canvas), используем анонимную аутентификацию
-                        await signInAnonymously(auth);
-                        console.log("initializeFirebase: Вход выполнен анонимно.");
-                    }
+                    await signInAnonymously(auth);
+                    console.log("initializeFirebase: Вход выполнен анонимно.");
                 }
 
                 // Установка userId после успешной аутентификации
@@ -843,6 +1006,13 @@
         // Начальная загрузка игровых данных и отображение главной страницы при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOMContentLoaded: DOM полностью загружен. Начинается инициализация приложения.");
+            // Инициализация Telegram Web App
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+            } else {
+                console.warn("Telegram WebApp SDK not found.");
+            }
+
             await initializeFirebase();
             showPage('mainPage'); // Убедиться, что главная страница активна при загрузке
         });
