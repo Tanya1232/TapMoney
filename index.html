@@ -56,10 +56,18 @@
             font-size: 2.2rem; /* Further reduced font size for score */
             font-weight: normal; /* Bangers is already bold, no need for extra bold */
             color: #68d391; /* Green for score */
-            margin-bottom: 20px; /* Space below score */
+            margin-bottom: 5px; /* Reduced margin */
             text-align: center;
             width: 100%;
             padding-top: 20px; /* Padding from top of screen */
+        }
+        .multiplier-text {
+            font-size: 1.5rem; /* Size for multiplier text */
+            font-weight: normal;
+            color: #f6ad55; /* Orange for multiplier */
+            margin-bottom: 20px; /* Space below multiplier */
+            text-align: center;
+            width: 100%;
         }
         .click-button {
             /* Changed from solid blue to a more subtle background, image/icon will be inside */
@@ -172,6 +180,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             max-width: 90%;
+            width: 100%;
         }
         .sub-heading {
             font-size: 1.2rem;
@@ -183,6 +192,30 @@
             color: #cbd5e0;
             margin-bottom: 10px;
         }
+        .upgrade-button {
+            background-color: #48bb78; /* Green for upgrade button */
+            color: white;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-top: 20px;
+        }
+        .upgrade-button:hover:not(:disabled) {
+            background-color: #38a169;
+        }
+        .upgrade-button:disabled {
+            background-color: #6b7280; /* Gray for disabled */
+            cursor: not-allowed;
+        }
+        .upgrade-info-text {
+            color: #cbd5e0;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
@@ -190,7 +223,8 @@
 <body>
     <!-- Main Game Screen Content -->
     <div id="mainPage" class="page-content active">
-        <p class="score-text game-font">TapCoins: <span id="score">0</span></p>
+        <p class="score-text game-font">TapCoins: <span id="score">0.00</span></p>
+        <p class="multiplier-text game-font">За клик: <span id="tapCoinsPerAdDisplay">1.00</span></p>
         <button id="clickButton" class="click-button" disabled>
             💰 <!-- Coin emoji as a placeholder -->
         </button>
@@ -225,7 +259,12 @@
     <!-- Improvements Page Content (Улучшения) -->
     <div id="improvementsPage" class="page-content">
         <h2 class="text-3xl font-bold text-green-300 game-font">Улучшения</h2>
-        <p class="generic-page-content">Улучшить клик</p>
+        <div class="generic-page-content flex flex-col items-center">
+            <p class="upgrade-info-text">Улучшить клик на 0.10</p>
+            <button id="upgradeClickButton" class="upgrade-button">Улучшить клик</button>
+            <p id="upgradeTimerDisplay" class="timer-text hidden"></p>
+            <p id="upgradeLoadingText" class="loading-text"></p>
+        </div>
     </div>
 
     <!-- Games Page Content (Игры) -->
@@ -314,13 +353,22 @@
     <script>
         // --- Game Core Elements ---
         const scoreDisplay = document.getElementById('score');
+        const tapCoinsPerAdDisplay = document.getElementById('tapCoinsPerAdDisplay');
         const clickButton = document.getElementById('clickButton');
         const timerDisplay = document.getElementById('timerDisplay');
         const loadingText = document.getElementById('loadingText');
 
+        // --- Improvements Page Elements ---
+        const upgradeClickButton = document.getElementById('upgradeClickButton');
+        const upgradeTimerDisplay = document.getElementById('upgradeTimerDisplay');
+        const upgradeLoadingText = document.getElementById('upgradeLoadingText');
+
+
         let score = 0;
+        let tapCoinsPerAd = 1.00; // Initial value for coins per ad
         const adTimerDuration = 15; // Timer duration in seconds (15 or 30)
         const localStorageScoreKey = 'tapCoinsScore'; // Key for score in localStorage
+        const localStorageTapCoinsPerAdKey = 'tapCoinsPerAdValue'; // Key for tapCoinsPerAd in localStorage
 
         // --- Tab/Page Elements ---
         const navButtons = document.querySelectorAll('.nav-button');
@@ -348,13 +396,41 @@
 
             // If navigating back to main page, ensure game state is correct
             if (pageId === 'mainPage') {
-                loadTapCoins(); // Reloads score and enables button
-            } else {
-                // When on other pages, you might want to disable game button or pause game logic
-                // For now, just disable
+                loadGameData(); // Load all game data (score and multiplier)
+                // Ensure main click button is enabled if not already in timer state
+                if (!timerDisplay.classList.contains('hidden') || loadingText.textContent !== "") {
+                    clickButton.disabled = true; // Still disabled if ad is loading/timer running
+                } else {
+                    clickButton.disabled = false;
+                }
+            } else if (pageId === 'improvementsPage') {
+                // For improvements page, disable main game button and enable upgrade button
                 clickButton.disabled = true;
-                loadingText.textContent = ""; // Clear loading text
-                timerDisplay.classList.add('hidden'); // Hide timer
+                loadingText.textContent = ""; // Clear main loading text
+                timerDisplay.classList.add('hidden'); // Hide main timer
+
+                // Reset upgrade button state if returning to page
+                if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
+                    upgradeClickButton.disabled = true; // Still disabled if ad is loading/timer running
+                } else {
+                    upgradeClickButton.disabled = false;
+                    upgradeLoadingText.textContent = "";
+                    upgradeTimerDisplay.classList.add('hidden');
+                }
+
+            }
+             else {
+                // For other pages, disable main game button and clear messages
+                clickButton.disabled = true;
+                loadingText.textContent = ""; // Clear main loading text
+                timerDisplay.classList.add('hidden'); // Hide main timer
+
+                // Also disable upgrade button if it exists and is on a non-main/non-improvements page
+                if (upgradeClickButton) {
+                    upgradeClickButton.disabled = true;
+                    upgradeLoadingText.textContent = "";
+                    upgradeTimerDisplay.classList.add('hidden');
+                }
             }
             currentPageId = pageId; // Update current page
         }
@@ -367,57 +443,78 @@
             });
         });
 
-        // --- Game Logic Functions ---
+        // --- Game Data Loading/Saving ---
 
-        // Function to load TapCoins from localStorage
-        function loadTapCoins() {
-            // Only try to load if we are on the main game page
-            if (currentPageId !== 'mainPage') return;
-
-            loadingText.textContent = "Загрузка TapCoins...";
+        // Function to load all game data (score and multiplier) from localStorage
+        function loadGameData() {
+            loadingText.textContent = "Загрузка данных...";
             clickButton.disabled = true; // Disable button while loading
 
             try {
+                // Load score
                 const savedScore = localStorage.getItem(localStorageScoreKey);
                 if (savedScore !== null) {
-                    score = parseInt(savedScore, 10); // Convert string to integer
-                    if (isNaN(score)) { // Handle case where savedScore is not a valid number
+                    score = parseFloat(savedScore); // Use parseFloat for decimals
+                    if (isNaN(score)) {
                         score = 0;
                         console.warn("Invalid score in localStorage, resetting to 0.");
                     }
-                    console.log("TapCoins loaded from localStorage:", score);
                 } else {
                     score = 0;
-                    console.log("No existing TapCoins in localStorage, starting from 0.");
+                    console.log("No existing score, starting from 0.");
                 }
-                scoreDisplay.textContent = score;
+
+                // Load TapCoins per Ad multiplier
+                const savedTapCoinsPerAd = localStorage.getItem(localStorageTapCoinsPerAdKey);
+                if (savedTapCoinsPerAd !== null) {
+                    tapCoinsPerAd = parseFloat(savedTapCoinsPerAd);
+                    if (isNaN(tapCoinsPerAd)) {
+                        tapCoinsPerAd = 1.00;
+                        console.warn("Invalid tapCoinsPerAd in localStorage, resetting to 1.00.");
+                    }
+                } else {
+                    tapCoinsPerAd = 1.00;
+                    console.log("No existing tapCoinsPerAd, starting from 1.00.");
+                }
+
+                scoreDisplay.textContent = score.toFixed(2); // Display with 2 decimal places
+                tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2); // Display with 2 decimal places
                 loadingText.textContent = ""; // Clear loading message
-                clickButton.disabled = false; // Enable button
+                clickButton.disabled = false; // Enable main button
             } catch (error) {
-                console.error("Error loading TapCoins from localStorage:", error);
-                loadingText.textContent = "Ошибка загрузки TapCoins. Пожалуйста, перезапустите игру.";
+                console.error("Error loading game data from localStorage:", error);
+                loadingText.textContent = "Ошибка загрузки игры. Пожалуйста, перезапустите игру.";
                 clickButton.disabled = true;
             }
         }
 
-        // Function to save TapCoins to localStorage
-        function saveTapCoins() {
+        // Function to save all game data to localStorage
+        function saveGameData() {
             try {
-                localStorage.setItem(localStorageScoreKey, score.toString()); // Save as string
-                console.log("TapCoins saved to localStorage:", score);
+                localStorage.setItem(localStorageScoreKey, score.toFixed(2)); // Save score
+                localStorage.setItem(localStorageTapCoinsPerAdKey, tapCoinsPerAd.toFixed(2)); // Save multiplier
+                console.log("Game data saved:", { score: score, tapCoinsPerAd: tapCoinsPerAd });
             } catch (error) {
-                console.error("Error saving TapCoins to localStorage:", error);
+                console.error("Error saving game data to localStorage:", error);
             }
         }
 
+        // --- Ad and Game Logic Functions ---
+
         // Function to call the Monetag ad block
-        function showMonetagAd() {
+        function showMonetagAd(callback) {
             if (typeof show_9473169 === 'function') {
                 console.log("Calling Monetag ad...");
                 show_9473169();
+                // Execute callback after a short delay to allow ad to load/show
+                // In a real scenario, you'd ideally have an ad dismissal callback
+                setTimeout(() => {
+                    if (callback) callback();
+                }, 500); // Small delay to let ad function run
             } else {
                 console.warn("Function show_9473169() not found. Monetag SDK might not have loaded yet or the zone is configured differently.");
-                // Fallback: if ad doesn't show, continue as normal
+                // Fallback: if ad doesn't show, just proceed
+                if (callback) callback();
             }
         }
 
@@ -427,38 +524,74 @@
             timerDisplay.classList.add('hidden');
             loadingText.textContent = 'Загрузка рекламы...'; // Show loading text for ad
 
-            showMonetagAd();
-
-            let timeLeft = adTimerDuration;
-            timerDisplay.textContent = `До награды: ${timeLeft} сек`;
-            timerDisplay.classList.remove('hidden');
-
-            const timerInterval = setInterval(() => {
-                timeLeft--;
+            showMonetagAd(() => {
+                let timeLeft = adTimerDuration;
                 timerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                timerDisplay.classList.remove('hidden');
+                loadingText.textContent = ""; // Clear ad loading text as timer starts
 
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    score++;
-                    scoreDisplay.textContent = score;
-                    clickButton.disabled = false;
-                    timerDisplay.classList.add('hidden');
-                    loadingText.textContent = ""; // Clear ad loading text
-                    console.log('Score increased, button active. Saving...');
-                    saveTapCoins(); // Save score immediately after getting a TapCoin
-                }
-            }, 1000);
+                const timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = `До награды: ${timeLeft} сек`;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval); // Stop the timer
+                        score += tapCoinsPerAd; // Add current multiplier value to score
+                        scoreDisplay.textContent = score.toFixed(2); // Update score display
+                        clickButton.disabled = false; // Activate button
+                        timerDisplay.classList.add('hidden'); // Hide timer
+                        console.log('Score increased, button active. Saving...');
+                        saveGameData(); // Save all game data
+                    }
+                }, 1000);
+            });
         });
 
-        // Initial load of TapCoins and show main page when the page loads
+        // Click event handler for the 'Улучшить клик' button
+        if (upgradeClickButton) {
+            upgradeClickButton.addEventListener('click', () => {
+                upgradeClickButton.disabled = true;
+                upgradeTimerDisplay.classList.add('hidden');
+                upgradeLoadingText.textContent = 'Загрузка рекламы...';
+
+                showMonetagAd(() => {
+                    let timeLeft = adTimerDuration;
+                    upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                    upgradeTimerDisplay.classList.remove('hidden');
+                    upgradeLoadingText.textContent = "";
+
+                    const upgradeTimerInterval = setInterval(() => {
+                        timeLeft--;
+                        upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+
+                        if (timeLeft <= 0) {
+                            clearInterval(upgradeTimerInterval);
+                            tapCoinsPerAd = parseFloat((tapCoinsPerAd + 0.10).toFixed(2)); // Increase by 0.10, format to avoid float issues
+                            tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2); // Update display on main page
+                            upgradeClickButton.disabled = false;
+                            upgradeTimerDisplay.classList.add('hidden');
+                            console.log('Click multiplier upgraded. Saving...');
+                            saveGameData(); // Save all game data
+                            // Re-enable main button if on main page and not in active ad process
+                            if (currentPageId === 'mainPage' && timerDisplay.classList.contains('hidden') && loadingText.textContent === "") {
+                                clickButton.disabled = false;
+                            }
+                        }
+                    }, 1000);
+                });
+            });
+        }
+
+
+        // Initial load of game data and show main page when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             showPage('mainPage'); // Ensure main page is active on load
-            loadTapCoins(); // Initial load of score
+            loadGameData(); // Initial load of all game data
         });
 
-        // Save score when the app is closed or hidden
-        window.addEventListener('beforeunload', saveTapCoins);
-        window.addEventListener('pagehide', saveTapCoins);
+        // Save game data when the app is closed or hidden
+        window.addEventListener('beforeunload', saveGameData);
+        window.addEventListener('pagehide', saveGameData);
     </script>
 </body>
 </html>
