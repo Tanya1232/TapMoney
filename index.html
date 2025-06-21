@@ -82,78 +82,10 @@
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
-
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global variables for Firebase instances
-        window.firebaseApp = null;
-        window.db = null;
-        window.auth = null;
-        window.userId = null;
-        window.isAuthReady = false;
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // Initialize Firebase app if not already initialized
-                if (!window.firebaseApp) {
-                    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-                    window.firebaseApp = initializeApp(firebaseConfig);
-                    window.db = getFirestore(window.firebaseApp);
-                    window.auth = getAuth(window.firebaseApp);
-                }
-
-                // Authenticate user
-                onAuthStateChanged(window.auth, async (user) => {
-                    if (user) {
-                        window.userId = user.uid;
-                        console.log("Authenticated with UID:", window.userId);
-                    } else {
-                        console.log("No user signed in. Attempting anonymous sign-in.");
-                        try {
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                await signInWithCustomToken(window.auth, __initial_auth_token);
-                                window.userId = window.auth.currentUser.uid;
-                                console.log("Signed in with custom token:", window.userId);
-                            } else {
-                                await signInAnonymously(window.auth);
-                                window.userId = window.auth.currentUser.uid;
-                                console.log("Signed in anonymously:", window.userId);
-                            }
-                        } catch (error) {
-                            console.error("Firebase authentication error:", error);
-                            // Fallback if authentication fails, use a random ID or provide a user-friendly message
-                            window.userId = crypto.randomUUID();
-                            console.warn("Authentication failed, using random UUID for userId:", window.userId);
-                        }
-                    }
-                    window.isAuthReady = true;
-                    // Trigger initial score load after auth is ready
-                    if (typeof window.loadTapCoins === 'function') {
-                        await window.loadTapCoins();
-                    }
-                });
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                document.getElementById('loadingText').textContent = "Ошибка загрузки игры. Пожалуйста, попробуйте еще раз.";
-                document.getElementById('clickButton').disabled = true;
-            }
-        });
-
-        // Save score when the app is closed or hidden (as a fallback)
-        document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'hidden' && typeof window.saveTapCoins === 'function') {
-                console.log("Document hidden, attempting to save score.");
-                await window.saveTapCoins();
-            }
-        });
-    </script>
 </head>
 <body>
-    <div class="container">
+    <!-- Game Screen (always visible now) -->
+    <div id="gameScreen" class="container">
         <h1 class="text-3xl font-bold text-green-400">Тапалка Игра</h1>
         <p class="instruction-text">Нажимайте на кнопку, чтобы получить TapCoins!</p>
         <p class="score-text">TapCoins: <span id="score">0</span></p>
@@ -162,9 +94,7 @@
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
     </div>
 
-    <script type="module">
-        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <script>
         const scoreDisplay = document.getElementById('score');
         const clickButton = document.getElementById('clickButton');
         const timerDisplay = document.getElementById('timerDisplay');
@@ -172,59 +102,46 @@
 
         let score = 0;
         const adTimerDuration = 15; // Timer duration in seconds (15 or 30)
+        const localStorageScoreKey = 'tapCoinsScore'; // Key for score in localStorage
 
-        // Function to load TapCoins from Firestore
-        window.loadTapCoins = async () => {
-            if (!window.isAuthReady || !window.db || !window.userId) {
-                console.log("Firebase not ready for loading, retrying...");
-                setTimeout(window.loadTapCoins, 500); // Retry after 500ms
-                return;
-            }
-
+        // Function to load TapCoins from localStorage
+        function loadTapCoins() {
             loadingText.textContent = "Загрузка TapCoins...";
             clickButton.disabled = true; // Disable button while loading
 
             try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const userDocRef = doc(window.db, `artifacts/${appId}/users/${window.userId}/user_data/score`);
-                const docSnap = await getDoc(userDocRef);
-
-                if (docSnap.exists()) {
-                    score = docSnap.data().tapCoins || 0;
-                    console.log("TapCoins loaded:", score);
+                const savedScore = localStorage.getItem(localStorageScoreKey);
+                if (savedScore !== null) {
+                    score = parseInt(savedScore, 10); // Convert string to integer
+                    if (isNaN(score)) { // Handle case where savedScore is not a valid number
+                        score = 0;
+                        console.warn("Invalid score in localStorage, resetting to 0.");
+                    }
+                    console.log("TapCoins loaded from localStorage:", score);
                 } else {
                     score = 0;
-                    console.log("No existing TapCoins, starting from 0.");
-                    // Optionally, save initial 0 score
-                    await setDoc(userDocRef, { tapCoins: 0 });
+                    console.log("No existing TapCoins in localStorage, starting from 0.");
                 }
                 scoreDisplay.textContent = score;
                 loadingText.textContent = ""; // Clear loading message
                 clickButton.disabled = false; // Enable button
                 clickButton.textContent = 'Получить TapCoins';
             } catch (error) {
-                console.error("Error loading TapCoins:", error);
+                console.error("Error loading TapCoins from localStorage:", error);
                 loadingText.textContent = "Ошибка загрузки TapCoins. Пожалуйста, перезапустите игру.";
                 clickButton.disabled = true;
             }
-        };
+        }
 
-        // Function to save TapCoins to Firestore
-        window.saveTapCoins = async () => {
-            if (!window.isAuthReady || !window.db || !window.userId) {
-                console.warn("Firebase not ready for saving. Skipping save.");
-                return;
-            }
-
+        // Function to save TapCoins to localStorage
+        function saveTapCoins() {
             try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const userDocRef = doc(window.db, `artifacts/${appId}/users/${window.userId}/user_data/score`);
-                await setDoc(userDocRef, { tapCoins: score });
-                console.log("TapCoins saved:", score);
+                localStorage.setItem(localStorageScoreKey, score.toString()); // Save as string
+                console.log("TapCoins saved to localStorage:", score);
             } catch (error) {
-                console.error("Error saving TapCoins:", error);
+                console.error("Error saving TapCoins to localStorage:", error);
             }
-        };
+        }
 
         // Function to call the Monetag ad block
         function showMonetagAd() {
@@ -237,8 +154,8 @@
             }
         }
 
-        // Click event handler for the button
-        clickButton.addEventListener('click', async () => {
+        // Click event handler for the main game button
+        clickButton.addEventListener('click', () => {
             clickButton.disabled = true;
             clickButton.textContent = 'Загрузка рекламы...';
             timerDisplay.classList.add('hidden');
@@ -249,7 +166,7 @@
             timerDisplay.textContent = `До награды: ${timeLeft} сек`;
             timerDisplay.classList.remove('hidden');
 
-            const timerInterval = setInterval(async () => { // Made async to allow await
+            const timerInterval = setInterval(() => {
                 timeLeft--;
                 timerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
@@ -261,13 +178,17 @@
                     clickButton.disabled = false;
                     timerDisplay.classList.add('hidden');
                     console.log('Score increased, button active. Saving...');
-                    await window.saveTapCoins(); // Save score immediately after getting a TapCoin
+                    saveTapCoins(); // Save score immediately after getting a TapCoin
                 }
             }, 1000);
         });
 
-        // Initial load of TapCoins when the page is ready and Firebase is initialized
-        // This is handled by onAuthStateChanged in the first script tag
+        // Initial load of TapCoins when the page loads
+        document.addEventListener('DOMContentLoaded', loadTapCoins);
+
+        // Save score when the app is closed or hidden
+        window.addEventListener('beforeunload', saveTapCoins);
+        window.addEventListener('pagehide', saveTapCoins);
     </script>
 </body>
 </html>
