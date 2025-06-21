@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тапалка Игра</title>
+    <title>TapMoney</title>
     <!-- Tailwind CSS import -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: "Inter", sans-serif;
-            background-color: #1a202c; /* Dark background */
+            background-color: #1a202c; /* Solid dark background */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -19,75 +19,72 @@
             padding: 20px;
             box-sizing: border-box;
             color: #e2e8f0; /* Light text */
+            overflow: hidden; /* Prevent scrolling if elements slightly overflow */
         }
-        .container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #2d3748; /* Gray container background */
-            padding: 40px;
-            border-radius: 15px; /* Rounded corners */
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); /* Shadow */
-            text-align: center;
-            width: 100%;
-            max-width: 450px; /* Max width for responsiveness */
+        /* No .container style, as it's removed */
+
+        .score-text {
+            font-size: 4rem; /* Larger font for score */
+            font-weight: bold;
+            color: #68d391; /* Green for score */
+            margin-bottom: 40px; /* More space below score */
+            z-index: 10; /* Ensure score is above button if overlapping */
+            position: relative; /* For z-index to work */
         }
         .click-button {
             background-color: #3b82f6; /* Blue button */
             color: white;
-            padding: 15px 30px;
-            font-size: 1.5rem;
+            width: 200px; /* Fixed width for round shape */
+            height: 200px; /* Fixed height for round shape */
+            border-radius: 50%; /* Make it perfectly round */
+            font-size: 1.5rem; /* Text size for button */
+            display: flex; /* Flexbox for centering content inside */
+            justify-content: center;
+            align-items: center;
             border: none;
-            border-radius: 10px; /* Rounded button corners */
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            margin-top: 20px;
-            width: 100%;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Stronger shadow for floating effect */
+            position: relative; /* For potential future image inside */
+            /* Ensure it's centered even if score is above */
+            margin-top: 0; /* Remove previous margin-top */
         }
         .click-button:hover:not(:disabled) {
             background-color: #2563eb; /* Darker on hover */
-            transform: translateY(-2px); /* Slight lift */
+            transform: scale(1.05); /* Slight enlarge on hover */
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5); /* Stronger shadow on hover */
         }
         .click-button:active:not(:disabled) {
-            transform: translateY(0); /* Press effect */
+            transform: scale(0.98); /* Slight shrink on click */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Smaller shadow on click */
         }
         .click-button:disabled {
             background-color: #4a5568; /* Gray for disabled button */
             cursor: not-allowed;
             box-shadow: none;
-        }
-        .score-text {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #68d391; /* Green for score */
-            margin-top: 15px;
-        }
-        .instruction-text {
-            font-size: 1.2rem;
-            color: #cbd5e0; /* Light gray for instructions */
-            margin-bottom: 20px;
+            transform: none;
         }
         .timer-text {
             font-size: 1.5rem;
             color: #f6ad55; /* Orange for timer */
-            margin-top: 10px;
+            margin-top: 30px; /* Space below button */
+            z-index: 10;
+            position: relative;
         }
         .loading-text {
             font-size: 1.2rem;
             color: #a0aec0;
             margin-top: 10px;
+            z-index: 10;
+            position: relative;
         }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
 </head>
 <body>
-    <!-- Game Screen (always visible now) -->
-    <div id="gameScreen" class="container">
-        <h1 class="text-3xl font-bold text-green-400">Тапалка Игра</h1>
-        <p class="instruction-text">Нажимайте на кнопку, чтобы получить TapCoins!</p>
+    <!-- Game Screen (always visible now, with simplified layout) -->
+    <div id="gameScreen" class="flex flex-col items-center justify-center min-h-screen w-full">
         <p class="score-text">TapCoins: <span id="score">0</span></p>
         <button id="clickButton" class="click-button" disabled>Загрузка...</button>
         <p id="timerDisplay" class="timer-text hidden"></p> <!-- Element to display the timer -->
