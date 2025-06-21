@@ -45,13 +45,14 @@
             display: none; /* Hidden by default */
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Align content to top, not center vertically */
             flex-grow: 1; /* Takes available space */
             width: 100%;
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
             padding-bottom: 140px; /* Space for the fixed two-row navbar */
+            overflow-y: auto; /* Allow scrolling if content is too tall */
         }
         .page-content.active {
             display: flex; /* Show active page */
@@ -181,7 +182,7 @@
             font-size: 1.5rem;
             color: #e2e8f0;
             padding: 20px;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for readability */
+            background-color: rgba(0, 0, 0, 0.8); /* Changed to solid dark background */
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             max-width: 90%;
@@ -267,18 +268,20 @@
             justify-content: center;
             width: 90%; /* Make container take more width */
             max-width: 400px; /* Max width for larger screens, but responsive */
-            background-color: rgba(0, 0, 0, 0.7); /* Darker background for game area */
+            background-color: rgba(0, 0, 0, 1); /* Solid black background for game container */
             border-radius: 10px;
             padding: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8); /* Stronger shadow */
             margin-bottom: 20px; /* Space between game and sub-buttons */
+            /* Ensure the container is above the main body background */
+            position: relative;
+            z-index: 10; 
         }
         #snakeCanvas {
             background-color: #000; /* Black background for the game */
             border: 2px solid #5a67d8; /* Blue border for the game area */
             border-radius: 8px;
             touch-action: none; /* Prevent default touch actions like scrolling/zooming */
-            /* Dynamic width/height will be set by JS based on container */
             width: 100%; /* Make canvas responsive to its container */
             height: auto; /* Maintain aspect ratio */
             aspect-ratio: 1 / 1; /* Ensure it's square */
@@ -310,24 +313,13 @@
             background-color: #6b7280;
             cursor: not-allowed;
         }
-        .snake-game-score {
+        .snake-game-score, .snake-game-status {
             font-size: 1.8rem;
-            color: #68d391;
+            color: #E0E0E0; /* Lighter color for better contrast */
             margin-bottom: 10px;
             font-family: 'Press Start 2P', cursive; /* Use pixel font */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            background-color: rgba(0, 0, 0, 0.7); /* Darker semi-transparent background */
-            padding: 5px 10px;
-            border-radius: 5px;
-            width: fit-content;
-        }
-        .snake-game-status {
-            font-size: 1.2rem;
-            color: #f6ad55;
-            margin-top: 10px;
-            font-family: 'Press Start 2P', cursive; /* Use pixel font */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            background-color: rgba(0, 0, 0, 0.7); /* Darker semi-transparent background */
+            background-color: rgba(30, 30, 30, 0.9); /* Slightly transparent dark background for text */
             padding: 5px 10px;
             border-radius: 5px;
             width: fit-content;
@@ -402,7 +394,7 @@
         <div id="snakeSubPage" class="sub-page-content active flex flex-col items-center justify-center">
             <div id="snakeGameContainer">
                 <p class="snake-game-score pixel-font">Очки: <span id="snakeScore">0</span></p>
-                <canvas id="snakeCanvas" width="300" height="300"></canvas>
+                <canvas id="snakeCanvas"></canvas>
                 <div class="snake-game-controls">
                     <button id="snakeStartButton" class="snake-game-button">Начать игру</button>
                     <button id="snakeRestartButton" class="snake-game-button" disabled>Перезапустить</button>
@@ -545,7 +537,7 @@
         // --- Snake Game Variables ---
         // Ensure canvas width/height are multiples of gridSize for clean drawing
         const SNAKE_CANVAS_SIZE = 300; // Fixed size for game logic
-        const SNAKE_GRID_SIZE = 20; // Size of each snake segment and food
+        const SNAKE_GRID_SIZE = 15; // Smaller grid size for more cells and clearer view
         const SNAKE_TILE_COUNT = SNAKE_CANVAS_SIZE / SNAKE_GRID_SIZE; // Number of tiles across the canvas
 
         snakeCanvas.width = SNAKE_CANVAS_SIZE;
@@ -598,11 +590,11 @@
                 upgradeTimerDisplay.classList.add('hidden');
             }
 
-            // Stop snake game if running on any page other than the 'games' page or 'snake' sub-page.
-            // This ensures snake game interval is cleared when switching tabs.
-            if (gameRunning && pageId !== 'gamesPage' && currentPageId === 'gamesPage') {
+            // Stop snake game if running when switching tabs
+            if (gameRunning && pageId !== 'gamesPage') { // Stop if moving *away* from games page
                 stopSnakeGame();
             }
+
 
             // Specific logic based on the page being shown
             if (pageId === 'mainPage') {
@@ -666,11 +658,11 @@
                 }
             });
 
-            // If navigating to Snake game, initialize it
+            // If navigating to Snake game sub-page, initialize it
             if (subPageId === 'snakeSubPage') {
                 initializeSnakeGame();
             } else {
-                // Stop snake game if navigating away from it
+                // Stop snake game if navigating away from it to another game sub-page
                 if (gameRunning) {
                     stopSnakeGame();
                 }
@@ -849,7 +841,7 @@
             snakeStatusDisplay.textContent = "Нажмите 'Начать игру'";
             snakeStartButton.disabled = false;
             snakeRestartButton.disabled = true;
-            // No need to draw here, will be drawn on start
+            drawSnakeAndFood(); // Draw initial state on init
         }
 
         function resetSnakeGame() {
@@ -864,7 +856,8 @@
             if (gameInterval) clearInterval(gameInterval); // Clear any existing interval
             gameRunning = false;
             changingDirection = false;
-            snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height); // Clear canvas
+            snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height); // Clear canvas explicitly
+            drawSnakeAndFood(); // Draw the initial single snake segment and food
         }
 
         function generateFood() {
@@ -882,19 +875,19 @@
         }
 
         function drawSnakeAndFood() {
-            snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+            snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height); // Clear entire canvas
 
             // Draw food first (so snake draws over it if same cell)
-            snakeCtx.fillStyle = '#FFC107'; // Yellow food
+            snakeCtx.fillStyle = '#FF0000'; // Red food, simple and visible
             snakeCtx.fillRect(food.x, food.y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
-            snakeCtx.strokeStyle = '#FF8F00'; // Darker yellow border
+            snakeCtx.strokeStyle = '#AA0000'; // Darker red border
             snakeCtx.strokeRect(food.x, food.y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
 
             // Draw snake
             for (let i = 0; i < snake.length; i++) {
-                snakeCtx.fillStyle = (i === 0) ? '#4CAF50' : '#8BC34A'; // Head green, body light green
+                snakeCtx.fillStyle = '#00FF00'; // Bright green snake, simple and visible
                 snakeCtx.fillRect(snake[i].x, snake[i].y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
-                snakeCtx.strokeStyle = '#2E7D32'; // Darker green border
+                snakeCtx.strokeStyle = '#00AA00'; // Darker green border
                 snakeCtx.strokeRect(snake[i].x, snake[i].y, SNAKE_GRID_SIZE, SNAKE_GRID_SIZE);
             }
         }
@@ -902,7 +895,7 @@
         function updateSnakeGame() {
             if (!gameRunning) return;
 
-            changingDirection = false; // Reset flag
+            changingDirection = false; // Reset flag after direction change is processed
 
             const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
@@ -939,12 +932,16 @@
 
         function changeDirection(event) {
             // Only respond to key events if on snake game sub-page and game is running
-            if (!(currentPageId === 'gamesPage' && gamesSubPages[0].classList.contains('active') && gameRunning)) {
+            // Check if 'snakeSubPage' is active within 'gamesPage'
+            if (!(currentPageId === 'gamesPage' && document.getElementById('snakeSubPage').classList.contains('active') && gameRunning)) {
                 return;
             }
 
             // Prevent default scroll behavior for arrow keys
             event.preventDefault();
+
+            if (changingDirection) return; // Prevent rapid direction changes
+            changingDirection = true; // Set flag
 
             const keyPressed = event.keyCode;
             const LEFT_KEY = 37;
@@ -977,20 +974,20 @@
         let touchStartY = 0;
 
         snakeCanvas.addEventListener('touchstart', e => {
-            if (currentPageId === 'gamesPage' && gamesSubPages[0].classList.contains('active') && gameRunning) {
+            if (currentPageId === 'gamesPage' && document.getElementById('snakeSubPage').classList.contains('active') && gameRunning) {
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
             }
         }, { passive: false });
 
         snakeCanvas.addEventListener('touchmove', e => {
-            if (currentPageId === 'gamesPage' && gamesSubPages[0].classList.contains('active') && gameRunning) {
+            if (currentPageId === 'gamesPage' && document.getElementById('snakeSubPage').classList.contains('active') && gameRunning) {
                 e.preventDefault(); // Prevent scrolling
             }
         }, { passive: false });
 
         snakeCanvas.addEventListener('touchend', e => {
-            if (currentPageId === 'gamesPage' && gamesSubPages[0].classList.contains('active') && gameRunning) {
+            if (currentPageId === 'gamesPage' && document.getElementById('snakeSubPage').classList.contains('active') && gameRunning) {
                 const touchEndX = e.changedTouches[0].clientX;
                 const touchEndY = e.changedTouches[0].clientY;
 
@@ -1060,7 +1057,8 @@
         }
 
         snakeStartButton.addEventListener('click', startGame);
-        snakeRestartButton.addEventListener('click', startGame); // Restart works as start (resets first)
+        // Ensure restart button always calls startGame, which includes resetGame logic
+        snakeRestartButton.addEventListener('click', startGame);
 
 
         // Initial load of game data and show main page when the page loads
