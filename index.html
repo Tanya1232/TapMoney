@@ -253,6 +253,46 @@
         .sub-page-content.active {
             display: block; /* Show active sub-page */
         }
+
+        /* --- Snake Game Specific Styles --- */
+        #snakeCanvas {
+            background-color: #000; /* Black background for the game */
+            border: 2px solid #5a67d8; /* Blue border for the game area */
+            border-radius: 8px;
+            touch-action: none; /* Prevent default touch actions like scrolling/zooming */
+        }
+        .snake-game-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .snake-game-button {
+            background-color: #48bb78;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        .snake-game-button:hover {
+            background-color: #38a169;
+        }
+        .snake-game-score {
+            font-size: 1.8rem;
+            color: #68d391;
+            margin-bottom: 10px;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .snake-game-status {
+            font-size: 1.2rem;
+            color: #f6ad55;
+            margin-top: 10px;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
@@ -307,7 +347,16 @@
     <!-- Games Page Content (Игры) -->
     <div id="gamesPage" class="page-content">
         <h2 class="text-3xl font-bold text-indigo-300 game-font">Игры</h2>
-        <p class="generic-page-content">В разработке</p>
+        <div class="generic-page-content flex flex-col items-center justify-center">
+            <p class="snake-game-score game-font">Очки: <span id="snakeScore">0</span></p>
+            <canvas id="snakeCanvas" width="300" height="300"></canvas>
+            <div class="snake-game-controls">
+                <button id="snakeStartButton" class="snake-game-button">Начать игру</button>
+                <button id="snakeRestartButton" class="snake-game-button">Перезапустить</button>
+            </div>
+            <p id="snakeStatus" class="snake-game-status"></p>
+            <p id="snakeCoinsEarned" class="snake-game-status">Заработано: 0.00 TapCoins</p>
+        </div>
     </div>
 
     <!-- About Page Content (Об игре) -->
@@ -409,11 +458,34 @@
         const aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
         const aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
 
+        // --- Snake Game Elements ---
+        const snakeCanvas = document.getElementById('snakeCanvas');
+        const snakeCtx = snakeCanvas.getContext('2d');
+        const snakeStartButton = document.getElementById('snakeStartButton');
+        const snakeRestartButton = document.getElementById('snakeRestartButton');
+        const snakeScoreDisplay = document.getElementById('snakeScore');
+        const snakeStatusDisplay = document.getElementById('snakeStatus');
+        const snakeCoinsEarnedDisplay = document.getElementById('snakeCoinsEarned');
+
+
         let score = 0;
         let tapCoinsPerAd = 1.00; // Initial value for coins per ad
         const adTimerDuration = 15; // Timer duration in seconds (15 or 30)
         const localStorageScoreKey = 'tapCoinsScore'; // Key for score in localStorage
         const localStorageTapCoinsPerAdKey = 'tapCoinsPerAdValue'; // Key for tapCoinsPerAd in localStorage
+
+        // --- Snake Game Variables ---
+        const gridSize = 20; // Size of each snake segment and food
+        const tileCount = snakeCanvas.width / gridSize; // Number of tiles across the canvas
+        let snake = [];
+        let food = {};
+        let dx = gridSize; // Initial direction (moving right)
+        let dy = 0;
+        let snakeGameScore = 0;
+        let snakeGameTapCoinsEarned = 0;
+        let gameInterval;
+        let gameRunning = false;
+
 
         // --- Tab/Page Elements ---
         const navButtons = document.querySelectorAll('.nav-button');
@@ -460,6 +532,10 @@
                 } else {
                     clickButton.disabled = false;
                 }
+                // Stop snake game if running
+                if (gameRunning) {
+                    stopSnakeGame();
+                }
             } else if (pageId === 'improvementsPage') {
                 // For improvements page, enable upgrade button if not already in timer state
                  if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
@@ -467,9 +543,25 @@
                 } else {
                     upgradeClickButton.disabled = false;
                 }
+                // Stop snake game if running
+                if (gameRunning) {
+                    stopSnakeGame();
+                }
             } else if (pageId === 'aboutPage') {
                 // Ensure default sub-page is shown in 'About'
                 showSubPage('newsSubPage');
+                // Stop snake game if running
+                if (gameRunning) {
+                    stopSnakeGame();
+                }
+            } else if (pageId === 'gamesPage') {
+                // Initialize or prepare Snake game
+                initializeSnakeGame();
+            } else {
+                // Stop snake game if running on any other page
+                if (gameRunning) {
+                    stopSnakeGame();
+                }
             }
             currentPageId = pageId; // Update current page
         }
@@ -647,6 +739,216 @@
                 });
             });
         }
+
+        // --- Snake Game Logic ---
+
+        function initializeSnakeGame() {
+            snakeStatusDisplay.textContent = "Нажмите 'Начать игру'";
+            snakeStartButton.disabled = false;
+            snakeRestartButton.disabled = true;
+            resetSnakeGame();
+            drawSnakeAndFood(); // Draw initial state
+        }
+
+        function resetSnakeGame() {
+            snake = [{ x: 10 * gridSize, y: 10 * gridSize }]; // Start in the middle
+            dx = gridSize;
+            dy = 0;
+            snakeGameScore = 0;
+            snakeGameTapCoinsEarned = 0;
+            snakeScoreDisplay.textContent = snakeGameScore;
+            snakeCoinsEarnedDisplay.textContent = `Заработано: ${snakeGameTapCoinsEarned.toFixed(2)} TapCoins`;
+            generateFood();
+            if (gameInterval) clearInterval(gameInterval); // Clear any existing interval
+            gameRunning = false;
+        }
+
+        function generateFood() {
+            food = {
+                x: Math.floor(Math.random() * tileCount) * gridSize,
+                y: Math.floor(Math.random() * tileCount) * gridSize
+            };
+            // Ensure food does not spawn on the snake
+            for (let i = 0; i < snake.length; i++) {
+                if (food.x === snake[i].x && food.y === snake[i].y) {
+                    generateFood(); // Recurse if food on snake
+                    return;
+                }
+            }
+        }
+
+        function drawSnakeAndFood() {
+            snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+
+            // Draw snake
+            for (let i = 0; i < snake.length; i++) {
+                snakeCtx.fillStyle = (i === 0) ? '#4CAF50' : '#8BC34A'; // Head green, body light green
+                snakeCtx.fillRect(snake[i].x, snake[i].y, gridSize, gridSize);
+                snakeCtx.strokeStyle = '#2E7D32'; // Darker green border
+                snakeCtx.strokeRect(snake[i].x, snake[i].y, gridSize, gridSize);
+            }
+
+            // Draw food
+            snakeCtx.fillStyle = '#FFC107'; // Yellow food
+            snakeCtx.fillRect(food.x, food.y, gridSize, gridSize);
+            snakeCtx.strokeStyle = '#FF8F00'; // Darker yellow border
+            snakeCtx.strokeRect(food.x, food.y, gridSize, gridSize);
+        }
+
+        function updateSnakeGame() {
+            if (!gameRunning) return;
+
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+            // Check for collisions with walls
+            if (head.x < 0 || head.x >= snakeCanvas.width ||
+                head.y < 0 || head.y >= snakeCanvas.height) {
+                endSnakeGame("Врезался в стену!");
+                return;
+            }
+
+            // Check for collision with self
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    endSnakeGame("Врезался в себя!");
+                    return;
+                }
+            }
+
+            snake.unshift(head); // Add new head
+
+            // Check if food was eaten
+            if (head.x === food.x && head.y === food.y) {
+                snakeGameScore++;
+                snakeScoreDisplay.textContent = snakeGameScore;
+                snakeCoinsEarned += 0.10; // Earn 0.10 TapCoins per segment
+                snakeCoinsEarnedDisplay.textContent = `Заработано: ${snakeCoinsEarned.toFixed(2)} TapCoins`;
+                generateFood(); // Generate new food
+            } else {
+                snake.pop(); // Remove tail if no food eaten
+            }
+
+            drawSnakeAndFood();
+        }
+
+        function changeDirection(event) {
+            // Prevent default scroll behavior for arrow keys
+            if (currentPageId === 'gamesPage') {
+                event.preventDefault();
+            }
+
+            const keyPressed = event.keyCode;
+            const LEFT_KEY = 37;
+            const UP_KEY = 38;
+            const RIGHT_KEY = 39;
+            const DOWN_KEY = 40;
+
+            const goingUp = dy === -gridSize;
+            const goingDown = dy === gridSize;
+            const goingLeft = dx === -gridSize;
+            const goingRight = dx === gridSize;
+
+            if (keyPressed === LEFT_KEY && !goingRight) {
+                dx = -gridSize;
+                dy = 0;
+            }
+            if (keyPressed === UP_KEY && !goingDown) {
+                dx = 0;
+                dy = -gridSize;
+            }
+            if (keyPressed === RIGHT_KEY && !goingLeft) {
+                dx = gridSize;
+                dy = 0;
+            }
+            if (keyPressed === DOWN_KEY && !goingUp) {
+                dx = 0;
+                dy = gridSize;
+            }
+        }
+
+        // Add touch/swipe controls for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        snakeCanvas.addEventListener('touchstart', e => {
+            if (currentPageId === 'gamesPage' && gameRunning) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: false });
+
+        snakeCanvas.addEventListener('touchmove', e => {
+            if (currentPageId === 'gamesPage' && gameRunning) {
+                e.preventDefault(); // Prevent scrolling
+            }
+        }, { passive: false });
+
+        snakeCanvas.addEventListener('touchend', e => {
+            if (currentPageId === 'gamesPage' && gameRunning) {
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+
+                const dxTouch = touchEndX - touchStartX;
+                const dyTouch = touchEndY - touchStartY;
+
+                const goingUp = dy === -gridSize;
+                const goingDown = dy === gridSize;
+                const goingLeft = dx === -gridSize;
+                const goingRight = dx === gridSize;
+
+                if (Math.abs(dxTouch) > Math.abs(dyTouch)) { // Horizontal swipe
+                    if (dxTouch > 0 && !goingLeft) {
+                        dx = gridSize; dy = 0; // Right
+                    } else if (dxTouch < 0 && !goingRight) {
+                        dx = -gridSize; dy = 0; // Left
+                    }
+                } else { // Vertical swipe
+                    if (dyTouch > 0 && !goingUp) {
+                        dx = 0; dy = gridSize; // Down
+                    } else if (dyTouch < 0 && !goingDown) {
+                        dx = 0; dy = -gridSize; // Up
+                    }
+                }
+            }
+        });
+
+
+        document.addEventListener('keydown', changeDirection);
+
+        function startGame() {
+            if (gameRunning) return; // Prevent multiple intervals
+            gameRunning = true;
+            snakeStatusDisplay.textContent = "Играем!";
+            snakeStartButton.disabled = true;
+            snakeRestartButton.disabled = false;
+            resetSnakeGame();
+            gameInterval = setInterval(updateSnakeGame, 150); // Game speed
+        }
+
+        function endSnakeGame(message) {
+            gameRunning = false;
+            clearInterval(gameInterval);
+            snakeStatusDisplay.textContent = `Игра окончена! ${message}`;
+            snakeStartButton.disabled = true; // Can't start again without restart
+            snakeRestartButton.disabled = false;
+            
+            // Add earned TapCoins to main game score
+            score = parseFloat((score + snakeCoinsEarned).toFixed(2));
+            saveGameData(); // Save updated main score
+            scoreDisplay.textContent = score.toFixed(2); // Update main score display
+            console.log(`Earned ${snakeCoinsEarned.toFixed(2)} TapCoins from Snake game.`);
+        }
+
+        function stopSnakeGame() {
+            if (gameRunning) {
+                clearInterval(gameInterval);
+                gameRunning = false;
+                snakeStatusDisplay.textContent = "Игра приостановлена.";
+            }
+        }
+
+        snakeStartButton.addEventListener('click', startGame);
+        snakeRestartButton.addEventListener('click', startGame); // Restart works as start (resets first)
 
 
         // Initial load of game data and show main page when the page loads
