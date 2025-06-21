@@ -35,6 +35,23 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* Stronger shadow for readability on image background */
         }
 
+        /* --- Common Page Styles --- */
+        .page-content {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1; /* Takes available space */
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            padding-bottom: 140px; /* Space for the fixed two-row navbar */
+        }
+        .page-content.active {
+            display: flex; /* Show active page */
+        }
+
         .score-text {
             font-size: 2.2rem; /* Further reduced font size for score */
             font-weight: normal; /* Bangers is already bold, no need for extra bold */
@@ -43,7 +60,6 @@
             text-align: center;
             width: 100%;
             padding-top: 20px; /* Padding from top of screen */
-            /* Removed background-color property */
         }
         .click-button {
             /* Changed from solid blue to a more subtle background, image/icon will be inside */
@@ -57,6 +73,7 @@
             display: flex; /* Flexbox for centering content inside */
             justify-content: center;
             align-items: center;
+            border: none;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.3s ease;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.6); /* Initial shadow and subtle glow */
@@ -88,7 +105,6 @@
             margin-top: 20px; /* Space below button */
             text-align: center;
             width: 100%;
-            /* Removed background-color property */
         }
         .loading-text {
             font-size: 1rem; /* Smaller loading text */
@@ -96,19 +112,6 @@
             margin-top: 10px;
             text-align: center;
             width: 100%;
-            /* Removed background-color property */
-        }
-
-        /* Main content area to center the button and score vertically */
-        #gameScreen { /* Adjusted to be the main flex container for score, button, timer, loading */
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* Center content vertically */
-            align-items: center;
-            flex-grow: 1; /* Allows it to take up available vertical space */
-            width: 100%;
-            padding-bottom: 140px; /* Increased space for the fixed two-row navbar */
-            box-sizing: border-box;
         }
 
         /* Navbar styles */
@@ -159,13 +162,34 @@
         .nav-button-icon {
             font-size: 1.1rem; /* Smaller icon size */
         }
+
+        /* Generic content styles for other pages */
+        .generic-page-content {
+            font-size: 1.5rem;
+            color: #e2e8f0;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for readability */
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            max-width: 90%;
+        }
+        .sub-heading {
+            font-size: 1.2rem;
+            color: #68d391;
+            margin-top: 15px;
+        }
+        .sub-text {
+            font-size: 1rem;
+            color: #cbd5e0;
+            margin-bottom: 10px;
+        }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
 </head>
 <body>
-    <!-- Game Screen -->
-    <div id="gameScreen">
+    <!-- Main Game Screen Content -->
+    <div id="mainPage" class="page-content active">
         <p class="score-text game-font">TapCoins: <span id="score">0</span></p>
         <button id="clickButton" class="click-button" disabled>
             💰 <!-- Coin emoji as a placeholder -->
@@ -174,53 +198,121 @@
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
     </div>
 
+    <!-- Shop Page Content (Магазин) -->
+    <div id="shopPage" class="page-content">
+        <h2 class="text-3xl font-bold text-yellow-300 game-font">Магазин</h2>
+        <p class="generic-page-content">Здесь будут различные предметы для покупки. Скоро!</p>
+    </div>
+
+    <!-- Tasks Page Content (Задания) -->
+    <div id="tasksPage" class="page-content">
+        <h2 class="text-3xl font-bold text-purple-300 game-font">Задания</h2>
+        <p class="generic-page-content">Ежедневные и еженедельные задания ждут тебя!</p>
+    </div>
+
+    <!-- Friends Page Content (Друзья) -->
+    <div id="friendsPage" class="page-content">
+        <h2 class="text-3xl font-bold text-blue-300 game-font">Друзья</h2>
+        <p class="generic-page-content">Пригласи друзей и играй вместе!</p>
+    </div>
+
+    <!-- Stats Page Content (Статистика) -->
+    <div id="statsPage" class="page-content">
+        <h2 class="text-3xl font-bold text-red-300 game-font">Статистика</h2>
+        <p class="generic-page-content">Твои достижения и место в рейтинге.</p>
+    </div>
+
+    <!-- Improvements Page Content (Улучшения) -->
+    <div id="improvementsPage" class="page-content">
+        <h2 class="text-3xl font-bold text-green-300 game-font">Улучшения</h2>
+        <p class="generic-page-content">Улучшить клик</p>
+    </div>
+
+    <!-- Games Page Content (Игры) -->
+    <div id="gamesPage" class="page-content">
+        <h2 class="text-3xl font-bold text-indigo-300 game-font">Игры</h2>
+        <p class="generic-page-content">В разработке</p>
+    </div>
+
+    <!-- About Page Content (Об игре) -->
+    <div id="aboutPage" class="page-content">
+        <h2 class="text-3xl font-bold text-teal-300 game-font">Об игре</h2>
+        <p class="generic-page-content">
+            <span class="sub-heading">Новости</span><br>
+            <span class="sub-text">Следите за обновлениями!</span>
+            <br><br>
+            <span class="sub-heading">Описание игры</span><br>
+            <span class="sub-text">Простая, но затягивающая тапалка с элементами монетизации.</span>
+        </p>
+    </div>
+
+    <!-- Withdraw Page Content (Вывод) -->
+    <div id="withdrawPage" class="page-content">
+        <h2 class="text-3xl font-bold text-pink-300 game-font">Вывод</h2>
+        <p class="generic-page-content">В разработке, следите за новостями.</p>
+    </div>
+
+    <!-- Settings Page Content (Настройки) -->
+    <div id="settingsPage" class="page-content">
+        <h2 class="text-3xl font-bold text-gray-300 game-font">Настройки</h2>
+        <p class="generic-page-content">
+            <span class="sub-heading">Язык</span><br>
+            <span class="sub-text">Русский</span>
+            <br><br>
+            <span class="sub-heading">Звук</span><br>
+            <span class="sub-text">Вкл/Выкл</span>
+        </p>
+    </div>
+
+
     <!-- Navigation Bar -->
     <div class="navbar">
         <!-- Row 1 -->
-        <button class="nav-button active" onclick="openTelegramWebApp('main')">
+        <button class="nav-button" data-page="main">
             <span class="nav-button-icon">🏠</span> <!-- Home icon -->
             Главная
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('shop')">
+        <button class="nav-button" data-page="shop">
             <span class="nav-button-icon">🛒</span> <!-- Shop icon -->
             Магазин
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('tasks')">
+        <button class="nav-button" data-page="tasks">
             <span class="nav-button-icon">✅</span> <!-- Tasks icon -->
             Задания
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('friends')">
+        <button class="nav-button" data-page="friends">
             <span class="nav-button-icon">🤝</span> <!-- Friends icon -->
             Друзья
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('stats')">
+        <button class="nav-button" data-page="stats">
             <span class="nav-button-icon">📊</span> <!-- Stats icon -->
             Статистика
         </button>
         <!-- Row 2 - New Tabs -->
-        <button class="nav-button" onclick="openTelegramWebApp('improvements')">
+        <button class="nav-button" data-page="improvements">
             <span class="nav-button-icon">✨</span> <!-- Sparkle/Improvement icon -->
             Улучшения
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('games')">
+        <button class="nav-button" data-page="games">
             <span class="nav-button-icon">🎮</span> <!-- Game controller icon -->
             Игры
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('about')">
+        <button class="nav-button" data-page="about">
             <span class="nav-button-icon">ℹ️</span> <!-- Info icon -->
             Об игре
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('withdraw')">
+        <button class="nav-button" data-page="withdraw">
             <span class="nav-button-icon">💸</span> <!-- Money wings/Withdraw icon -->
             Вывод
         </button>
-        <button class="nav-button" onclick="openTelegramWebApp('settings')">
-            <span class="nav-button-icon">⚙️</span> <!-- Settings icon (already existed, moved to second row for even distribution) -->
+        <button class="nav-button" data-page="settings">
+            <span class="nav-button-icon">⚙️</span> <!-- Settings icon -->
             Настройки
         </button>
     </div>
 
     <script>
+        // --- Game Core Elements ---
         const scoreDisplay = document.getElementById('score');
         const clickButton = document.getElementById('clickButton');
         const timerDisplay = document.getElementById('timerDisplay');
@@ -230,35 +322,58 @@
         const adTimerDuration = 15; // Timer duration in seconds (15 or 30)
         const localStorageScoreKey = 'tapCoinsScore'; // Key for score in localStorage
 
-        // Telegram Web App object
-        const TelegramWebApp = window.Telegram && window.Telegram.WebApp;
+        // --- Tab/Page Elements ---
+        const navButtons = document.querySelectorAll('.nav-button');
+        const pages = document.querySelectorAll('.page-content');
+        let currentPageId = 'mainPage'; // Keep track of the currently active page
 
-        // Function to open a new Telegram Web App page
-        function openTelegramWebApp(page) {
-            let url = 'https://tanya1232.github.io/TapMoney/index.html'; // Default to index.html for all for now
-            // In the future, you would map 'shop' to 'shop.html', 'tasks' to 'tasks.html', etc.
-            // Example: if (page === 'shop') url = 'https://tanya1232.github.io/TapMoney/shop.html';
+        // Function to show a specific page and hide others
+        function showPage(pageId) {
+            pages.forEach(page => {
+                if (page.id === pageId) {
+                    page.classList.add('active');
+                } else {
+                    page.classList.remove('active');
+                }
+            });
 
-            if (TelegramWebApp) {
-                console.log(`Opening WebApp page: ${page} with URL: ${url}`);
-                TelegramWebApp.openLink(url);
+            // Update active state of nav buttons
+            navButtons.forEach(button => {
+                if (button.dataset.page + 'Page' === pageId) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+
+            // If navigating back to main page, ensure game state is correct
+            if (pageId === 'mainPage') {
+                loadTapCoins(); // Reloads score and enables button
             } else {
-                console.warn(`Telegram WebApp not found. Cannot open page: ${page}. Attempting direct browser open.`);
-                window.open(url, '_blank'); // Fallback for testing outside Telegram
+                // When on other pages, you might want to disable game button or pause game logic
+                // For now, just disable
+                clickButton.disabled = true;
+                loadingText.textContent = ""; // Clear loading text
+                timerDisplay.classList.add('hidden'); // Hide timer
             }
-
-            // Remove active class from all nav buttons
-            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-            // Add active class to the clicked button (simplistic, won't persist across actual page reloads/navigations)
-            // event.currentTarget is null if called without event, so check
-            if (event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
-            }
+            currentPageId = pageId; // Update current page
         }
-        window.openTelegramWebApp = openTelegramWebApp; // Make global for onclick
+
+        // Add event listeners to navigation buttons
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pageToShow = button.dataset.page + 'Page';
+                showPage(pageToShow);
+            });
+        });
+
+        // --- Game Logic Functions ---
 
         // Function to load TapCoins from localStorage
         function loadTapCoins() {
+            // Only try to load if we are on the main game page
+            if (currentPageId !== 'mainPage') return;
+
             loadingText.textContent = "Загрузка TapCoins...";
             clickButton.disabled = true; // Disable button while loading
 
@@ -278,7 +393,6 @@
                 scoreDisplay.textContent = score;
                 loadingText.textContent = ""; // Clear loading message
                 clickButton.disabled = false; // Enable button
-                // clickButton.textContent = 'Получить TapCoins'; // Removed text content, now using emoji
             } catch (error) {
                 console.error("Error loading TapCoins from localStorage:", error);
                 loadingText.textContent = "Ошибка загрузки TapCoins. Пожалуйста, перезапустите игру.";
@@ -310,8 +424,8 @@
         // Click event handler for the main game button
         clickButton.addEventListener('click', () => {
             clickButton.disabled = true;
-            // clickButton.textContent = 'Загрузка рекламы...'; // Removed text content, now using emoji
             timerDisplay.classList.add('hidden');
+            loadingText.textContent = 'Загрузка рекламы...'; // Show loading text for ad
 
             showMonetagAd();
 
@@ -327,17 +441,20 @@
                     clearInterval(timerInterval);
                     score++;
                     scoreDisplay.textContent = score;
-                    // clickButton.textContent = 'Получить TapCoins'; // Removed text content, now using emoji
                     clickButton.disabled = false;
                     timerDisplay.classList.add('hidden');
+                    loadingText.textContent = ""; // Clear ad loading text
                     console.log('Score increased, button active. Saving...');
                     saveTapCoins(); // Save score immediately after getting a TapCoin
                 }
             }, 1000);
         });
 
-        // Initial load of TapCoins when the page loads
-        document.addEventListener('DOMContentLoaded', loadTapCoins);
+        // Initial load of TapCoins and show main page when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('mainPage'); // Ensure main page is active on load
+            loadTapCoins(); // Initial load of score
+        });
 
         // Save score when the app is closed or hidden
         window.addEventListener('beforeunload', saveTapCoins);
