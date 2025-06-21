@@ -4,40 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TapMoney</title>
+    <!-- Google Fonts - 'Press Start 2P' for pixelated/gamey feel, 'Inter' for fallback -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- Tailwind CSS import -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: "Inter", sans-serif;
+            font-family: 'Inter', sans-serif; /* Fallback font */
             background-color: #1a202c; /* Solid dark background */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between; /* Distribute space for header, content, footer */
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 20px 0 0 0; /* Padding only at top for main content */
             box-sizing: border-box;
             color: #e2e8f0; /* Light text */
             overflow: hidden; /* Prevent scrolling if elements slightly overflow */
+            position: relative; /* For absolute positioning of navbar */
         }
-        /* No .container style, as it's removed */
+        /* Override default font for specific elements to use 'Press Start 2P' */
+        .game-font {
+            font-family: 'Press Start 2P', cursive;
+        }
 
         .score-text {
-            font-size: 4rem; /* Larger font for score */
+            font-size: 2.5rem; /* Reduced font size for score */
             font-weight: bold;
             color: #68d391; /* Green for score */
-            margin-bottom: 40px; /* More space below score */
-            z-index: 10; /* Ensure score is above button if overlapping */
-            position: relative; /* For z-index to work */
+            margin-bottom: 20px; /* Space below score */
+            text-align: center;
+            width: 100%;
+            padding-top: 20px; /* Padding from top of screen */
         }
         .click-button {
             background-color: #3b82f6; /* Blue button */
             color: white;
-            width: 200px; /* Fixed width for round shape */
-            height: 200px; /* Fixed height for round shape */
+            width: 180px; /* Slightly smaller fixed width for round shape */
+            height: 180px; /* Slightly smaller fixed height for round shape */
             border-radius: 50%; /* Make it perfectly round */
-            font-size: 1.5rem; /* Text size for button */
+            font-size: 1.3rem; /* Text size for button */
             display: flex; /* Flexbox for centering content inside */
             justify-content: center;
             align-items: center;
@@ -45,9 +52,8 @@
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Stronger shadow for floating effect */
-            position: relative; /* For potential future image inside */
-            /* Ensure it's centered even if score is above */
-            margin-top: 0; /* Remove previous margin-top */
+            position: relative;
+            flex-shrink: 0; /* Prevent button from shrinking */
         }
         .click-button:hover:not(:disabled) {
             background-color: #2563eb; /* Darker on hover */
@@ -65,30 +71,110 @@
             transform: none;
         }
         .timer-text {
-            font-size: 1.5rem;
+            font-size: 1.2rem; /* Smaller timer text */
             color: #f6ad55; /* Orange for timer */
-            margin-top: 30px; /* Space below button */
-            z-index: 10;
-            position: relative;
+            margin-top: 20px; /* Space below button */
+            text-align: center;
+            width: 100%;
         }
         .loading-text {
-            font-size: 1.2rem;
+            font-size: 1rem; /* Smaller loading text */
             color: #a0aec0;
             margin-top: 10px;
-            z-index: 10;
-            position: relative;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Main content area to center the button and score vertically */
+        #mainContent {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1; /* Allows it to take up available vertical space */
+            width: 100%;
+        }
+
+        /* Navbar styles */
+        .navbar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            background-color: #2d3748; /* Darker background for navbar */
+            padding: 10px 0;
+            position: fixed; /* Fix at the bottom */
+            bottom: 0;
+            left: 0;
+            z-index: 100; /* Ensure it's on top */
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3); /* Shadow on top */
+        }
+        .nav-button {
+            background-color: transparent;
+            border: none;
+            color: #cbd5e0;
+            font-size: 0.9rem;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-button:hover {
+            background-color: #4a5568;
+            color: white;
+        }
+        .nav-button.active {
+            background-color: #3b82f6; /* Highlight active button */
+            color: white;
+        }
+        .nav-button-icon {
+            font-size: 1.5rem; /* Icon size */
         }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
 </head>
 <body>
-    <!-- Game Screen (always visible now, with simplified layout) -->
-    <div id="gameScreen" class="flex flex-col items-center justify-center min-h-screen w-full">
-        <p class="score-text">TapCoins: <span id="score">0</span></p>
-        <button id="clickButton" class="click-button" disabled>Загрузка...</button>
-        <p id="timerDisplay" class="timer-text hidden"></p> <!-- Element to display the timer -->
+    <!-- Game Screen -->
+    <div id="gameScreen" class="flex flex-col items-center justify-center w-full min-h-screen">
+        <p class="score-text game-font">TapCoins: <span id="score">0</span></p>
+        <div id="mainContent">
+            <button id="clickButton" class="click-button" disabled>Загрузка...</button>
+        </div>
+        <p id="timerDisplay" class="timer-text hidden"></p>
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <button class="nav-button active" onclick="openTelegramWebApp('main')">
+            <span class="nav-button-icon">🏠</span> <!-- Home icon -->
+            Главная
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('shop')">
+            <span class="nav-button-icon">🛒</span> <!-- Shop icon -->
+            Магазин
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('tasks')">
+            <span class="nav-button-icon">✅</span> <!-- Tasks icon -->
+            Задания
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('friends')">
+            <span class="nav-button-icon">🤝</span> <!-- Friends icon -->
+            Друзья
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('stats')">
+            <span class="nav-button-icon">📊</span> <!-- Stats icon -->
+            Статистика
+        </button>
+        <button class="nav-button" onclick="openTelegramWebApp('settings')">
+            <span class="nav-button-icon">⚙️</span> <!-- Settings icon -->
+            Настройки
+        </button>
     </div>
 
     <script>
@@ -100,6 +186,40 @@
         let score = 0;
         const adTimerDuration = 15; // Timer duration in seconds (15 or 30)
         const localStorageScoreKey = 'tapCoinsScore'; // Key for score in localStorage
+
+        // Telegram Web App object
+        const TelegramWebApp = window.Telegram && window.Telegram.WebApp;
+
+        // Function to open a new Telegram Web App page
+        function openTelegramWebApp(page) {
+            let url = 'https://tanya1232.github.io/TapMoney/index.html'; // Default to index.html for all for now
+            // In the future, you would map 'shop' to 'shop.html', 'tasks' to 'tasks.html', etc.
+            // Example: if (page === 'shop') url = 'https://tanya1232.github.io/TapMoney/shop.html';
+
+            if (TelegramWebApp) {
+                // For a multi-page app within Telegram WebApp context,
+                // you would typically navigate within the same WebApp instance
+                // or open new WebApp instances as needed.
+                // For now, opening main index.html for all buttons.
+                console.log(`Opening WebApp page: ${page} with URL: ${url}`);
+                // This will effectively reload the current WebApp with the new URL
+                // if it's within the same domain and context.
+                // For true new tabs, Telegram WebApp API has specific methods
+                // like openLink() which opens in external browser if not WebApp.
+                // For a multi-screen WebApp, you'd manage state/views internally.
+                TelegramWebApp.openLink(url); // Opens in default browser/webapp context
+            } else {
+                console.warn(`Telegram WebApp not found. Cannot open page: ${page}. Attempting direct browser open.`);
+                window.open(url, '_blank'); // Fallback for testing outside Telegram
+            }
+
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            // Add active class to the clicked button (simplistic, can be improved for real routing)
+            // Note: This won't persist across actual page reloads/navigations
+            event.currentTarget.classList.add('active');
+        }
+        window.openTelegramWebApp = openTelegramWebApp; // Make global for onclick
 
         // Function to load TapCoins from localStorage
         function loadTapCoins() {
