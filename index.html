@@ -272,7 +272,7 @@
             💰 <!-- Coin emoji as a placeholder -->
         </button>
         <p id="timerDisplay" class="timer-text hidden"></p>
-        <p id="loadingText" class="loading-text"></p>
+        <p id="loadingText" class="loading-text">Загрузка данных...</p>
         <p id="accumulatedPassiveIncomeDisplay" class="sub-text mt-4 game-font" style="font-size: 1.1rem; color: #a0f0a0;">Накоплено: 0.00 TapCoins</p>
         <button id="claimPassiveIncomeButton" class="upgrade-button mt-2" style="background-color: #007bff; /* Blue for claim button */">Забрать пассивный доход</button>
     </div>
@@ -408,7 +408,32 @@
         </button>
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration - PASTE YOUR CONFIG HERE
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxymJpyy8rkoNxpGA2AJPow1dsq1VuC1U",
+            authDomain: "tapmoney-game.firebaseapp.com",
+            projectId: "tapmoney-game",
+            storageBucket: "tapmoney-game.firebasestorage.app",
+            messagingSenderId: "476724058059",
+            appId: "1:476724058059:web:5737fb4f5dd1c2d500884e",
+            measurementId: "G-NC4FZ5MENZ"
+        };
+        // END OF YOUR FIREBASE CONFIG
+
+        // Firebase variables
+        let app;
+        let db;
+        let auth;
+        let userId;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Global app ID from Canvas environment
+
         // --- Game Core Elements ---
         const scoreDisplay = document.getElementById('score');
         const tapCoinsPerAdDisplay = document.getElementById('tapCoinsPerAdDisplay');
@@ -421,7 +446,7 @@
         const upgradeTimerDisplay = document.getElementById('upgradeTimerDisplay');
         const upgradeLoadingText = document.getElementById('upgradeLoadingText');
 
-        // New Elements for Passive Income
+        // Elements for Passive Income
         const passiveIncomeRateDisplay = document.getElementById('passiveIncomeRateDisplay'); // On Main Page
         const passiveIncomeRateDisplayImp = document.getElementById('passiveIncomeRateDisplayImp'); // On Improvements Page
         const upgradePassiveIncomeButton = document.getElementById('upgradePassiveIncomeButton');
@@ -438,13 +463,8 @@
         let score = 0;
         let tapCoinsPerAd = 1.00; // Initial value for coins per ad
         const adTimerDuration = 15; // Timer duration in seconds (15 or 30)
-        const localStorageScoreKey = 'tapCoinsScore'; // Key for score in localStorage
-        const localStorageTapCoinsPerAdKey = 'tapCoinsPerAdValue'; // Key for tapCoinsPerAd in localStorage
-        const localStoragePassiveIncomeRateKey = 'passiveIncomeRateValue';
-        const localStorageLastLoginTimestampKey = 'lastLoginTimestamp';
-        const localStorageAccumulatedPassiveIncomeKey = 'accumulatedPassiveIncomeValue';
-
-        // New Variables for Passive Income
+        
+        // Variables for Passive Income
         let passiveIncomeRate = 0.000; // TapCoins per hour
         let lastLoginTimestamp = Date.now(); // Last time app was opened
         let accumulatedPassiveIncome = 0; // Income accumulated since last login
@@ -495,13 +515,11 @@
 
             // Specific logic based on the page being shown
             if (pageId === 'mainPage') {
-                loadGameData(); // Load all game data (score and multiplier)
-                // Enable main click button if not already in timer state
-                if (!timerDisplay.classList.contains('hidden') || loadingText.textContent !== "") {
-                    clickButton.disabled = true; // Still disabled if ad is loading/timer running
-                } else {
-                    clickButton.disabled = false;
+                // Ensure data is loaded and buttons are enabled
+                if (userId) { // Only load data if Firebase auth is ready
+                    loadGameData(); // Re-load data to ensure freshest values
                 }
+                // Button enablement handled after data load
             } else if (pageId === 'improvementsPage') {
                 // For improvements page, ensure click upgrade button is correctly enabled/disabled
                  if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
@@ -556,75 +574,44 @@
 
         // --- Game Data Loading/Saving ---
 
-        // Function to load all game data (score and multiplier) from localStorage
-        function loadGameData() {
+        // Function to load all game data from Firestore
+        async function loadGameData() {
             loadingText.textContent = "Загрузка данных...";
             clickButton.disabled = true; // Disable button while loading
 
+            if (!db || !userId) {
+                console.error("Firestore or userId is not initialized. Attempting to re-initialize.");
+                // Try to re-initialize Firebase if not ready, although DOMContentLoaded should handle it
+                await initializeFirebase();
+                if (!db || !userId) {
+                    console.error("Firestore or userId still not initialized after retry. Cannot load data.");
+                    loadingText.textContent = "Ошибка: база данных не готова.";
+                    return;
+                }
+            }
+
             try {
-                // Load score
-                const savedScore = localStorage.getItem(localStorageScoreKey);
-                if (savedScore !== null) {
-                    score = parseFloat(savedScore); // Use parseFloat for decimals
-                    if (isNaN(score)) {
-                        score = 0;
-                        console.warn("Invalid score in localStorage, resetting to 0.");
-                    }
+                // Reference to the user's game data document
+                const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    score = parseFloat(data.score || 0);
+                    tapCoinsPerAd = parseFloat(data.tapCoinsPerAd || 1.00);
+                    passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
+                    lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
+                    accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
+                    console.log("Game data loaded from Firestore:", data);
                 } else {
+                    console.log("No existing game data found in Firestore, initializing defaults.");
                     score = 0;
-                    console.log("No existing score, starting from 0.");
-                }
-
-                // Load TapCoins per Ad multiplier
-                const savedTapCoinsPerAd = localStorage.getItem(localStorageTapCoinsPerAdKey);
-                if (savedTapCoinsPerAd !== null) {
-                    tapCoinsPerAd = parseFloat(savedTapCoinsPerAd);
-                    if (isNaN(tapCoinsPerAd)) {
-                        tapCoinsPerAd = 1.00;
-                        console.warn("Invalid tapCoinsPerAd in localStorage, resetting to 1.00.");
-                    }
-                } else {
                     tapCoinsPerAd = 1.00;
-                    console.log("No existing tapCoinsPerAd, starting from 1.00.");
-                }
-
-                // Load Passive Income Rate
-                const savedPassiveIncomeRate = localStorage.getItem(localStoragePassiveIncomeRateKey);
-                if (savedPassiveIncomeRate !== null) {
-                    passiveIncomeRate = parseFloat(savedPassiveIncomeRate);
-                    if (isNaN(passiveIncomeRate)) {
-                        passiveIncomeRate = 0.000;
-                        console.warn("Invalid passiveIncomeRate in localStorage, resetting to 0.000.");
-                    }
-                } else {
                     passiveIncomeRate = 0.000;
-                    console.log("No existing passiveIncomeRate, starting from 0.000.");
-                }
-
-                // Load Last Login Timestamp
-                const savedLastLoginTimestamp = localStorage.getItem(localStorageLastLoginTimestampKey);
-                if (savedLastLoginTimestamp !== null) {
-                    lastLoginTimestamp = parseInt(savedLastLoginTimestamp, 10);
-                    if (isNaN(lastLoginTimestamp)) {
-                        lastLoginTimestamp = Date.now();
-                        console.warn("Invalid lastLoginTimestamp in localStorage, resetting to current time.");
-                    }
-                } else {
                     lastLoginTimestamp = Date.now();
-                    console.log("No existing lastLoginTimestamp, setting to current time.");
-                }
-
-                // Load Accumulated Passive Income
-                const savedAccumulatedPassiveIncome = localStorage.getItem(localStorageAccumulatedPassiveIncomeKey);
-                if (savedAccumulatedPassiveIncome !== null) {
-                    accumulatedPassiveIncome = parseFloat(savedAccumulatedPassiveIncome);
-                    if (isNaN(accumulatedPassiveIncome)) {
-                        accumulatedPassiveIncome = 0;
-                        console.warn("Invalid accumulatedPassiveIncome in localStorage, resetting to 0.");
-                    }
-                } else {
                     accumulatedPassiveIncome = 0;
-                    console.log("No existing accumulatedPassiveIncome, starting from 0.");
+                    // Save default data immediately for new users
+                    await saveGameData(); // Use await here
                 }
 
                 // Calculate passive income earned since last login
@@ -632,7 +619,6 @@
                 const elapsedTimeMs = currentTime - lastLoginTimestamp;
                 const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); // Convert milliseconds to hours
 
-                // Only accumulate if passiveIncomeRate is positive and some time has passed
                 if (passiveIncomeRate > 0 && elapsedTimeHours > 0) {
                     const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
                     accumulatedPassiveIncome = parseFloat((accumulatedPassiveIncome + newlyAccumulated).toFixed(2));
@@ -640,44 +626,49 @@
                 }
                 lastLoginTimestamp = currentTime; // Update last login time after calculation
 
-                // Update displays on main page
-                scoreDisplay.textContent = score.toFixed(2); // Display main score
-                tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2); // Display click multiplier
-                passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3); // Display passive income rate on main page
-                accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`; // Display accumulated passive income on main page
-                claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome <= 0); // Disable if nothing to claim
+                updateDisplays(); // Update all UI elements
 
-                // Update display on improvements page if it exists
-                if (passiveIncomeRateDisplayImp) {
-                    passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
-                }
-
-                loadingText.textContent = ""; // Clear loading message for main page
-                clickButton.disabled = false; // Enable main button (if not in timer)
+                loadingText.textContent = ""; // Clear loading message
+                clickButton.disabled = false; // Enable main button
             } catch (error) {
-                console.error("Error loading game data from localStorage:", error);
+                console.error("Error loading game data from Firestore:", error);
                 loadingText.textContent = "Ошибка загрузки игры. Пожалуйста, перезапустите игру.";
                 clickButton.disabled = true;
             }
         }
 
-        // Function to save all game data to localStorage
-        function saveGameData() {
+        // Function to save all game data to Firestore
+        async function saveGameData() {
+            if (!db || !userId) {
+                console.error("Firestore or userId is not initialized. Cannot save data.");
+                return;
+            }
             try {
-                localStorage.setItem(localStorageScoreKey, score.toFixed(2)); // Save main score
-                localStorage.setItem(localStorageTapCoinsPerAdKey, tapCoinsPerAd.toFixed(2)); // Save click multiplier
-                localStorage.setItem(localStoragePassiveIncomeRateKey, passiveIncomeRate.toFixed(3)); // Save passive income rate with 3 decimals
-                localStorage.setItem(localStorageLastLoginTimestampKey, lastLoginTimestamp.toString()); // Save last login timestamp
-                localStorage.setItem(localStorageAccumulatedPassiveIncomeKey, accumulatedPassiveIncome.toFixed(2)); // Save accumulated passive income
-                console.log("Game data saved:", {
+                const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                const dataToSave = {
                     score: score,
                     tapCoinsPerAd: tapCoinsPerAd,
                     passiveIncomeRate: passiveIncomeRate,
                     lastLoginTimestamp: lastLoginTimestamp,
                     accumulatedPassiveIncome: accumulatedPassiveIncome
-                });
+                };
+                await setDoc(userDocRef, dataToSave, { merge: true }); // Use merge: true to avoid overwriting other fields if they exist
+                console.log("Game data saved to Firestore:", dataToSave);
             } catch (error) {
-                console.error("Error saving game data to localStorage:", error);
+                console.error("Error saving game data to Firestore:", error);
+            }
+        }
+
+        // Function to update all relevant UI displays
+        function updateDisplays() {
+            scoreDisplay.textContent = score.toFixed(2);
+            tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
+            passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
+            accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`;
+            claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome <= 0);
+
+            if (passiveIncomeRateDisplayImp) {
+                passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
             }
         }
 
@@ -706,25 +697,25 @@
         }
 
         // Click event handler for the main game button
-        clickButton.addEventListener('click', () => {
-            showMonetagAd(() => {
+        clickButton.addEventListener('click', async () => { // Made async to await saveGameData
+            showMonetagAd(async () => { // Made inner callback async
                 let timeLeft = adTimerDuration;
                 timerDisplay.textContent = `До награды: ${timeLeft} сек`;
                 timerDisplay.classList.remove('hidden');
                 loadingText.textContent = ""; // Clear ad loading text as timer starts
 
-                const timerInterval = setInterval(() => {
+                const timerInterval = setInterval(async () => { // Made interval callback async
                     timeLeft--;
                     timerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval); // Stop the timer
                         score = parseFloat((score + tapCoinsPerAd).toFixed(2)); // Add current multiplier value to score
-                        scoreDisplay.textContent = score.toFixed(2); // Update score display
+                        updateDisplays(); // Update score display immediately
                         clickButton.disabled = false; // Activate button
                         timerDisplay.classList.add('hidden'); // Hide timer
                         console.log('Score increased, button active. Saving...');
-                        saveGameData(); // Save all game data
+                        await saveGameData(); // Save all game data
                     }
                 }, 1000);
             }, loadingText, timerDisplay, clickButton);
@@ -732,25 +723,25 @@
 
         // Click event handler for the 'Улучшить клик' button
         if (upgradeClickButton) {
-            upgradeClickButton.addEventListener('click', () => {
-                showMonetagAd(() => {
+            upgradeClickButton.addEventListener('click', async () => { // Made async
+                showMonetagAd(async () => { // Made inner callback async
                     let timeLeft = adTimerDuration;
                     upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
                     upgradeTimerDisplay.classList.remove('hidden');
                     upgradeLoadingText.textContent = "";
 
-                    const upgradeTimerInterval = setInterval(() => {
+                    const upgradeTimerInterval = setInterval(async () => { // Made interval callback async
                         timeLeft--;
                         upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                         if (timeLeft <= 0) {
                             clearInterval(upgradeTimerInterval);
                             tapCoinsPerAd = parseFloat((tapCoinsPerAd + 0.10).toFixed(2)); // Increase by 0.10, format to avoid float issues
-                            tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2); // Update display on main page
+                            updateDisplays(); // Update display on main page
                             upgradeClickButton.disabled = false;
                             upgradeTimerDisplay.classList.add('hidden');
                             console.log('Click multiplier upgraded. Saving...');
-                            saveGameData(); // Save all game data
+                            await saveGameData(); // Save all game data
                             // Re-enable main button if on main page and not in active ad process
                             if (currentPageId === 'mainPage' && timerDisplay.classList.contains('hidden') && loadingText.textContent === "") {
                                 clickButton.disabled = false;
@@ -763,28 +754,25 @@
 
         // Click event handler for the 'Улучшить пассивный доход' button
         if (upgradePassiveIncomeButton) {
-            upgradePassiveIncomeButton.addEventListener('click', () => {
-                showMonetagAd(() => {
+            upgradePassiveIncomeButton.addEventListener('click', async () => { // Made async
+                showMonetagAd(async () => { // Made inner callback async
                     let timeLeft = adTimerDuration;
                     passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
                     passiveIncomeTimerDisplay.classList.remove('hidden');
                     passiveIncomeLoadingText.textContent = "";
 
-                    const passiveTimerInterval = setInterval(() => {
+                    const passiveTimerInterval = setInterval(async () => { // Made interval callback async
                         timeLeft--;
                         passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                         if (timeLeft <= 0) {
                             clearInterval(passiveTimerInterval);
                             passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); // Increase by 0.001, fixed to 3 decimals
-                            passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3); // Update display on main page
-                            if (passiveIncomeRateDisplayImp) { // Update display on improvements page too
-                                passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
-                            }
+                            updateDisplays(); // Update display
                             upgradePassiveIncomeButton.disabled = false;
                             passiveIncomeTimerDisplay.classList.add('hidden');
                             console.log('Passive income rate upgraded. Saving...');
-                            saveGameData();
+                            await saveGameData();
                         }
                     }, 1000);
                 }, passiveIncomeLoadingText, passiveIncomeTimerDisplay, upgradePassiveIncomeButton);
@@ -793,29 +781,73 @@
 
         // Click event handler for the 'Забрать пассивный доход' button
         if (claimPassiveIncomeButton) {
-            claimPassiveIncomeButton.addEventListener('click', () => {
+            claimPassiveIncomeButton.addEventListener('click', async () => { // Made async
                 if (accumulatedPassiveIncome > 0) {
                     score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
                     accumulatedPassiveIncome = 0; // Reset accumulated
-                    scoreDisplay.textContent = score.toFixed(2); // Update main score display
-                    accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`;
-                    claimPassiveIncomeButton.disabled = true; // Disable after claiming
-                    saveGameData(); // Save updated game data
+                    updateDisplays(); // Update main score display and disable button
+                    await saveGameData(); // Save updated game data
                     console.log("Passive income claimed!");
                 }
             });
         }
 
+        // Firebase Initialization and Data Loading
+        async function initializeFirebase() {
+            try {
+                // Initialize Firebase App if not already initialized
+                if (!app) {
+                    const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : JSON.stringify(firebaseConfig);
+                    const config = JSON.parse(firebaseConfigStr);
+
+                    if (Object.keys(config).length === 0 || !config.projectId) {
+                        throw new Error("Firebase config is missing or empty.");
+                    }
+                    app = initializeApp(config);
+                }
+                
+                // Initialize Auth and Firestore if not already initialized
+                if (!auth) auth = getAuth(app);
+                if (!db) db = getFirestore(app);
+
+                // Authenticate user only if not already authenticated
+                if (!auth.currentUser) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        console.log("Signed in with custom token.");
+                    } else {
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously.");
+                    }
+                }
+
+                // Set userId after successful authentication
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log("User ID:", userId);
+
+                // Load game data from Firestore
+                await loadGameData(); // This will also update displays
+
+            } catch (error) {
+                console.error("Firebase initialization or authentication failed:", error);
+                loadingText.textContent = "Ошибка загрузки игры. Пожалуйста, перезапустите игру.";
+                clickButton.disabled = true;
+            }
+        }
 
         // Initial load of game data and show main page when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            showPage('mainPage'); // Ensure main page is active on load
-            loadGameData(); // Initial load of all game data
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeFirebase();
+            showPage('mainPage'); // Ensure main page is active on load after data loads
         });
 
         // Save game data when the app is closed or hidden
         window.addEventListener('beforeunload', saveGameData);
-        window.addEventListener('pagehide', saveGameData);
+        window.addEventListener('pagehide', () => {
+            saveGameData();
+            // Optional: add a small delay for async save to complete if needed, but not guaranteed
+            // setTimeout(() => {}, 100);
+        });
     </script>
 </body>
 </html>
