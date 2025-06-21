@@ -285,13 +285,35 @@
     <!-- Shop Page Content (Магазин) -->
     <div id="shopPage" class="page-content">
         <h2 class="text-3xl font-bold text-yellow-300 game-font">Магазин</h2>
-        <p class="generic-page-content">Здесь будут различные предметы для покупки. Скоро!</p>
+        <div class="sub-navbar">
+            <button class="sub-nav-button active" data-subpage="shopItems">Предметы</button>
+            <button class="sub-nav-button" data-subpage="tapcoinExchange">Обмен TapCoins</button>
+        </div>
+        <div id="shopItemsSubPage" class="sub-page-content active generic-page-content">
+            <span class="sub-heading">Доступные предметы</span><br>
+            <span class="sub-text">Здесь будут различные предметы для покупки. Скоро!</span>
+        </div>
+        <div id="tapcoinExchangeSubPage" class="sub-page-content generic-page-content">
+            <span class="sub-heading">Обмен TapCoins</span><br>
+            <span class="sub-text">Здесь вы сможете обменять свои TapCoins на другие игровые ресурсы или валюты. Следите за обновлениями!</span>
+        </div>
     </div>
 
     <!-- Tasks Page Content (Задания) -->
     <div id="tasksPage" class="page-content">
         <h2 class="text-3xl font-bold text-purple-300 game-font">Задания</h2>
-        <p class="generic-page-content">Ежедневные и еженедельные задания ждут тебя!</p>
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Вступи в группу Telegram</h3>
+            <p class="sub-text">Получи 10 TapCoins за вступление в наше официальное сообщество!</p>
+            <a href="https://t.me/TapMoneyOfficial" target="_blank" class="upgrade-button" style="background-color: #007bff; margin-bottom: 15px;">Перейти в группу</a>
+            <button id="claimGroupTaskRewardButton" class="upgrade-button">Получить награду</button>
+            <p id="groupTaskStatus" class="sub-text mt-2"></p>
+        </div>
+
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Другие задания</h3>
+            <p class="sub-text">Больше ежедневных и еженедельных заданий скоро появятся здесь!</p>
+        </div>
     </div>
 
     <!-- Friends Page Content (Друзья) -->
@@ -475,6 +497,10 @@
         const aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
         const aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
 
+        // --- Элементы подвкладок страницы "Магазин" ---
+        const shopSubNavButtons = document.querySelectorAll('#shopPage .sub-nav-button');
+        const shopSubPages = document.querySelectorAll('#shopPage .sub-page-content');
+
         // --- Элементы для реферальной программы ---
         const referralIdDisplay = document.getElementById('referralIdDisplay');
         const invitedByDisplay = document.getElementById('invitedByDisplay');
@@ -482,6 +508,11 @@
         const referralStatus = document.getElementById('referralStatus');
         const referredUsersList = document.getElementById('referredUsersList');
         const noReferredUsers = document.getElementById('noReferredUsers');
+
+        // --- Элементы для задания "Вступи в группу" ---
+        const claimGroupTaskRewardButton = document.getElementById('claimGroupTaskRewardButton');
+        const groupTaskStatus = document.getElementById('groupTaskStatus');
+
 
         // Игровые данные
         let score = 0;
@@ -493,6 +524,7 @@
         let invitedBy = null; // ID пользователя, который пригласил текущего пользователя
         const NEW_USER_BONUS = 10; // Бонус для нового пользователя, пришедшего по реферальной ссылке
         const REFERRER_BONUS = 25; // Бонус для реферера за каждого приглашенного
+        let completedTasks = {}; // Объект для хранения выполненных заданий: { 'taskId': true }
 
 
         // --- Управление вкладками/страницами ---
@@ -528,6 +560,9 @@
             if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
             // Скрыть сообщение о копировании ссылки
             referralStatus.classList.add('hidden');
+            // Скрыть статус задания
+            groupTaskStatus.textContent = "";
+
 
             // Специфическая логика в зависимости от отображаемой страницы
             if (pageId === 'mainPage') {
@@ -554,16 +589,22 @@
                 }
             } else if (pageId === 'aboutPage') {
                 // Убедиться, что подстраница по умолчанию отображается в "Об игре"
-                showSubPage('newsSubPage');
+                showAboutSubPage('newsSubPage'); // Изменено на showAboutSubPage
             } else if (pageId === 'friendsPage') {
                 // Загрузить и отобразить информацию о реферальной программе
                 updateReferralDisplays();
+            } else if (pageId === 'shopPage') {
+                // Убедиться, что подстраница по умолчанию отображается в "Магазине"
+                showShopSubPage('shopItemsSubPage');
+            } else if (pageId === 'tasksPage') {
+                // Обновить статус задания "Вступи в группу"
+                updateGroupTaskStatus();
             }
             currentPageId = pageId; // Обновить текущую страницу
         }
 
         // Функция для отображения конкретной подстраницы в "Об игре"
-        function showSubPage(subPageId) {
+        function showAboutSubPage(subPageId) { // Переименована для ясности
             aboutSubPages.forEach(subPage => {
                 if (subPage.id === subPageId) {
                     subPage.classList.add('active');
@@ -572,6 +613,24 @@
                 }
             });
             aboutSubNavButtons.forEach(button => {
+                if (button.dataset.subpage + 'SubPage' === subPageId) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+        // Функция для отображения конкретной подстраницы в "Магазине"
+        function showShopSubPage(subPageId) { // Новая функция
+            shopSubPages.forEach(subPage => {
+                if (subPage.id === subPageId) {
+                    subPage.classList.add('active');
+                } else {
+                    subPage.classList.remove('active');
+                }
+            });
+            shopSubNavButtons.forEach(button => {
                 if (button.dataset.subpage + 'SubPage' === subPageId) {
                     button.classList.add('active');
                 } else {
@@ -592,9 +651,18 @@
         aboutSubNavButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const subPageToShow = button.dataset.subpage + 'SubPage';
-                showSubPage(subPageToShow);
+                showAboutSubPage(subPageToShow); // Изменено на showAboutSubPage
             });
         });
+
+        // Добавление слушателей событий для кнопок поднавигации "Магазин"
+        shopSubNavButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const subPageToShow = button.dataset.subpage + 'SubPage';
+                showShopSubPage(subPageToShow);
+            });
+        });
+
 
         // --- Загрузка/сохранение игровых данных ---
 
@@ -623,6 +691,7 @@
                     lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
                     accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
                     invitedBy = data.invitedBy || null; // Загружаем ID пригласившего
+                    completedTasks = data.completedTasks || {}; // Загружаем выполненные задания
                     console.log("loadGameData: Игровые данные загружены из Firestore:", data);
                 } else {
                     console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
@@ -633,6 +702,7 @@
                     lastLoginTimestamp = Date.now();
                     accumulatedPassiveIncome = 0;
                     invitedBy = null; // По умолчанию нет пригласившего
+                    completedTasks = {}; // Нет выполненных заданий
                 }
 
                 // Обработка реферальной программы при первом входе нового пользователя
@@ -691,7 +761,8 @@
                     passiveIncomeRate: passiveIncomeRate,
                     lastLoginTimestamp: lastLoginTimestamp,
                     accumulatedPassiveIncome: accumulatedPassiveIncome,
-                    invitedBy: invitedBy // Сохраняем ID пригласившего
+                    invitedBy: invitedBy, // Сохраняем ID пригласившего
+                    completedTasks: completedTasks // Сохраняем выполненные задания
                 };
                 await setDoc(userDocRef, dataToSave, { merge: true }); 
                 console.log("saveGameData: Игровые данные сохранены в Firestore:", dataToSave);
@@ -720,6 +791,10 @@
             // Обновление списка приглашенных друзей
             if (currentPageId === 'friendsPage') {
                 updateReferredUsersList();
+            }
+            // Обновление статуса задания "Вступи в группу"
+            if (currentPageId === 'tasksPage') {
+                updateGroupTaskStatus();
             }
         }
 
@@ -829,6 +904,78 @@
                 referralStatus.classList.remove('hidden');
             }
         });
+
+        // --- Логика задания "Вступить в группу" ---
+        const JOIN_GROUP_TASK_ID = 'joinGroup';
+        const JOIN_GROUP_REWARD = 10;
+
+        async function updateGroupTaskStatus() {
+            if (!claimGroupTaskRewardButton || !groupTaskStatus) return;
+
+            if (completedTasks[JOIN_GROUP_TASK_ID]) {
+                claimGroupTaskRewardButton.disabled = true;
+                groupTaskStatus.textContent = "Задание выполнено! Награда получена.";
+                groupTaskStatus.style.color = '#68d391'; // Зеленый
+            } else {
+                claimGroupTaskRewardButton.disabled = false;
+                groupTaskStatus.textContent = "Нажмите 'Получить награду' после вступления в группу.";
+                groupTaskStatus.style.color = '#cbd5e0'; // Белый/светло-серый
+            }
+        }
+
+        if (claimGroupTaskRewardButton) {
+            claimGroupTaskRewardButton.addEventListener('click', async () => {
+                if (!db || !userId || !isAuthReady) {
+                    groupTaskStatus.textContent = "Ошибка: база данных не готова.";
+                    groupTaskStatus.style.color = '#fc8181'; // Красный
+                    console.error("claimGroupTaskReward: Firestore или userId не инициализированы или аутентификация не готова.");
+                    return;
+                }
+
+                if (completedTasks[JOIN_GROUP_TASK_ID]) {
+                    groupTaskStatus.textContent = "Вы уже получили награду за это задание.";
+                    groupTaskStatus.style.color = '#f6ad55'; // Оранжевый
+                    return;
+                }
+
+                claimGroupTaskRewardButton.disabled = true;
+                groupTaskStatus.textContent = "Обработка награды...";
+                groupTaskStatus.style.color = '#63b3ed'; // Голубой
+
+                try {
+                    const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                    await runTransaction(db, async (transaction) => {
+                        const docSnap = await transaction.get(userDocRef);
+                        if (!docSnap.exists()) {
+                            throw new Error("Документ пользователя не найден.");
+                        }
+                        const currentData = docSnap.data();
+                        const currentScore = parseFloat(currentData.score || 0);
+                        const newScore = parseFloat((currentScore + JOIN_GROUP_REWARD).toFixed(2));
+                        const updatedCompletedTasks = { ...currentData.completedTasks, [JOIN_GROUP_TASK_ID]: true };
+
+                        transaction.update(userDocRef, { 
+                            score: newScore,
+                            completedTasks: updatedCompletedTasks
+                        });
+
+                        // Обновляем локальные переменные после успешной транзакции
+                        score = newScore;
+                        completedTasks = updatedCompletedTasks;
+                    });
+
+                    updateDisplays(); // Обновляем счет на экране
+                    updateGroupTaskStatus(); // Обновляем статус кнопки
+                    console.log(`Задание "${JOIN_GROUP_TASK_ID}" выполнено. Награда ${JOIN_GROUP_REWARD} TapCoins начислена.`);
+
+                } catch (error) {
+                    console.error("Ошибка при получении награды за задание 'Вступи в группу':", error);
+                    groupTaskStatus.textContent = `Ошибка: ${error.message}. Попробуйте позже.`;
+                    groupTaskStatus.style.color = '#fc8181'; // Красный
+                    claimGroupTaskRewardButton.disabled = false; // Разрешаем повторную попытку
+                }
+            });
+        }
 
 
         // --- Функции для рекламы и игровой логики ---
