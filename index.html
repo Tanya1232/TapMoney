@@ -267,11 +267,14 @@
     <div id="mainPage" class="page-content active">
         <p class="score-text game-font">TapCoins: <span id="score">0.00</span></p>
         <p class="multiplier-text game-font">За клик: <span id="tapCoinsPerAdDisplay">1.00</span></p>
+        <p class="multiplier-text game-font" style="margin-bottom: 10px; color: #add8e6;">Пассивный доход: <span id="passiveIncomeRateDisplay">0.000</span> TapCoins/час</p>
         <button id="clickButton" class="click-button" disabled>
             💰 <!-- Coin emoji as a placeholder -->
         </button>
         <p id="timerDisplay" class="timer-text hidden"></p>
-        <p id="loadingText" class="loading-text">Загрузка данных...</p>
+        <p id="loadingText" class="loading-text"></p>
+        <p id="accumulatedPassiveIncomeDisplay" class="sub-text mt-4 game-font" style="font-size: 1.1rem; color: #a0f0a0;">Накоплено: 0.00 TapCoins</p>
+        <button id="claimPassiveIncomeButton" class="upgrade-button mt-2" style="background-color: #007bff; /* Blue for claim button */">Забрать пассивный доход</button>
     </div>
 
     <!-- Shop Page Content (Магазин) -->
@@ -296,16 +299,24 @@
     <div id="statsPage" class="page-content">
         <h2 class="text-3xl font-bold text-red-300 game-font">Статистика</h2>
         <p class="generic-page-content">Твои достижения и место в рейтинге.</p>
+    
     </div>
 
     <!-- Improvements Page Content (Улучшения) -->
     <div id="improvementsPage" class="page-content">
         <h2 class="text-3xl font-bold text-green-300 game-font">Улучшения</h2>
-        <div class="generic-page-content flex flex-col items-center">
-            <p class="upgrade-info-text">Улучшить клик на 0.10</p>
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <p class="upgrade-info-text">Улучшить клик на 0.10 за рекламу</p>
             <button id="upgradeClickButton" class="upgrade-button">Улучшить клик</button>
             <p id="upgradeTimerDisplay" class="timer-text hidden"></p>
             <p id="upgradeLoadingText" class="loading-text"></p>
+        </div>
+
+        <div class="generic-page-content flex flex-col items-center">
+            <p class="upgrade-info-text">Пассивный доход: <span id="passiveIncomeRateDisplayImp">0.000</span> TapCoins/час</p>
+            <button id="upgradePassiveIncomeButton" class="upgrade-button">Улучшить пассивный доход (Реклама)</button>
+            <p id="passiveIncomeTimerDisplay" class="timer-text hidden"></p>
+            <p id="passiveIncomeLoadingText" class="loading-text"></p>
         </div>
     </div>
 
@@ -410,15 +421,34 @@
         const upgradeTimerDisplay = document.getElementById('upgradeTimerDisplay');
         const upgradeLoadingText = document.getElementById('upgradeLoadingText');
 
+        // New Elements for Passive Income
+        const passiveIncomeRateDisplay = document.getElementById('passiveIncomeRateDisplay'); // On Main Page
+        const passiveIncomeRateDisplayImp = document.getElementById('passiveIncomeRateDisplayImp'); // On Improvements Page
+        const upgradePassiveIncomeButton = document.getElementById('upgradePassiveIncomeButton');
+        const passiveIncomeTimerDisplay = document.getElementById('passiveIncomeTimerDisplay');
+        const passiveIncomeLoadingText = document.getElementById('passiveIncomeLoadingText');
+        const accumulatedPassiveIncomeDisplay = document.getElementById('accumulatedPassiveIncomeDisplay'); // On Main Page
+        const claimPassiveIncomeButton = document.getElementById('claimPassiveIncomeButton');
+
         // --- About Page Sub-Tab Elements ---
         const aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
         const aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
+
 
         let score = 0;
         let tapCoinsPerAd = 1.00; // Initial value for coins per ad
         const adTimerDuration = 15; // Timer duration in seconds (15 or 30)
         const localStorageScoreKey = 'tapCoinsScore'; // Key for score in localStorage
         const localStorageTapCoinsPerAdKey = 'tapCoinsPerAdValue'; // Key for tapCoinsPerAd in localStorage
+        const localStoragePassiveIncomeRateKey = 'passiveIncomeRateValue';
+        const localStorageLastLoginTimestampKey = 'lastLoginTimestamp';
+        const localStorageAccumulatedPassiveIncomeKey = 'accumulatedPassiveIncomeValue';
+
+        // New Variables for Passive Income
+        let passiveIncomeRate = 0.000; // TapCoins per hour
+        let lastLoginTimestamp = Date.now(); // Last time app was opened
+        let accumulatedPassiveIncome = 0; // Income accumulated since last login
+
 
         // --- Tab/Page Elements ---
         const navButtons = document.querySelectorAll('.nav-button');
@@ -455,7 +485,14 @@
                 upgradeLoadingText.textContent = "";
                 upgradeTimerDisplay.classList.add('hidden');
             }
-            
+            // Reset states for passive income elements on Improvements page
+            if (upgradePassiveIncomeButton) {
+                upgradePassiveIncomeButton.disabled = false; // Always enabled for upgrade
+                passiveIncomeLoadingText.textContent = "";
+                passiveIncomeTimerDisplay.classList.add('hidden');
+            }
+            // Claim button is on main page now, no need to reset here based on specific page load
+
             // Specific logic based on the page being shown
             if (pageId === 'mainPage') {
                 loadGameData(); // Load all game data (score and multiplier)
@@ -466,11 +503,15 @@
                     clickButton.disabled = false;
                 }
             } else if (pageId === 'improvementsPage') {
-                // For improvements page, enable upgrade button if not already in timer state
+                // For improvements page, ensure click upgrade button is correctly enabled/disabled
                  if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
                     upgradeClickButton.disabled = true; // Still disabled if ad is loading/timer running
                 } else {
                     upgradeClickButton.disabled = false;
+                }
+                // Only update the passive income rate display on the improvements page if it exists
+                if (passiveIncomeRateDisplayImp) {
+                    passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
                 }
             } else if (pageId === 'aboutPage') {
                 // Ensure default sub-page is shown in 'About'
@@ -517,10 +558,6 @@
 
         // Function to load all game data (score and multiplier) from localStorage
         function loadGameData() {
-            // Only try to load if we are on the main game page or just loaded the app
-            if (currentPageId !== 'mainPage' && currentPageId !== 'initialLoad') return;
-
-
             loadingText.textContent = "Загрузка данных...";
             clickButton.disabled = true; // Disable button while loading
 
@@ -551,10 +588,72 @@
                     console.log("No existing tapCoinsPerAd, starting from 1.00.");
                 }
 
-                scoreDisplay.textContent = score.toFixed(2); // Display with 2 decimal places
-                tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2); // Display with 2 decimal places
-                loadingText.textContent = ""; // Clear loading message
-                clickButton.disabled = false; // Enable main button
+                // Load Passive Income Rate
+                const savedPassiveIncomeRate = localStorage.getItem(localStoragePassiveIncomeRateKey);
+                if (savedPassiveIncomeRate !== null) {
+                    passiveIncomeRate = parseFloat(savedPassiveIncomeRate);
+                    if (isNaN(passiveIncomeRate)) {
+                        passiveIncomeRate = 0.000;
+                        console.warn("Invalid passiveIncomeRate in localStorage, resetting to 0.000.");
+                    }
+                } else {
+                    passiveIncomeRate = 0.000;
+                    console.log("No existing passiveIncomeRate, starting from 0.000.");
+                }
+
+                // Load Last Login Timestamp
+                const savedLastLoginTimestamp = localStorage.getItem(localStorageLastLoginTimestampKey);
+                if (savedLastLoginTimestamp !== null) {
+                    lastLoginTimestamp = parseInt(savedLastLoginTimestamp, 10);
+                    if (isNaN(lastLoginTimestamp)) {
+                        lastLoginTimestamp = Date.now();
+                        console.warn("Invalid lastLoginTimestamp in localStorage, resetting to current time.");
+                    }
+                } else {
+                    lastLoginTimestamp = Date.now();
+                    console.log("No existing lastLoginTimestamp, setting to current time.");
+                }
+
+                // Load Accumulated Passive Income
+                const savedAccumulatedPassiveIncome = localStorage.getItem(localStorageAccumulatedPassiveIncomeKey);
+                if (savedAccumulatedPassiveIncome !== null) {
+                    accumulatedPassiveIncome = parseFloat(savedAccumulatedPassiveIncome);
+                    if (isNaN(accumulatedPassiveIncome)) {
+                        accumulatedPassiveIncome = 0;
+                        console.warn("Invalid accumulatedPassiveIncome in localStorage, resetting to 0.");
+                    }
+                } else {
+                    accumulatedPassiveIncome = 0;
+                    console.log("No existing accumulatedPassiveIncome, starting from 0.");
+                }
+
+                // Calculate passive income earned since last login
+                const currentTime = Date.now();
+                const elapsedTimeMs = currentTime - lastLoginTimestamp;
+                const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); // Convert milliseconds to hours
+
+                // Only accumulate if passiveIncomeRate is positive and some time has passed
+                if (passiveIncomeRate > 0 && elapsedTimeHours > 0) {
+                    const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
+                    accumulatedPassiveIncome = parseFloat((accumulatedPassiveIncome + newlyAccumulated).toFixed(2));
+                    console.log(`Passive income accumulated: ${newlyAccumulated.toFixed(2)} TapCoins over ${elapsedTimeHours.toFixed(2)} hours (Total: ${accumulatedPassiveIncome.toFixed(2)})`);
+                }
+                lastLoginTimestamp = currentTime; // Update last login time after calculation
+
+                // Update displays on main page
+                scoreDisplay.textContent = score.toFixed(2); // Display main score
+                tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2); // Display click multiplier
+                passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3); // Display passive income rate on main page
+                accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`; // Display accumulated passive income on main page
+                claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome <= 0); // Disable if nothing to claim
+
+                // Update display on improvements page if it exists
+                if (passiveIncomeRateDisplayImp) {
+                    passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
+                }
+
+                loadingText.textContent = ""; // Clear loading message for main page
+                clickButton.disabled = false; // Enable main button (if not in timer)
             } catch (error) {
                 console.error("Error loading game data from localStorage:", error);
                 loadingText.textContent = "Ошибка загрузки игры. Пожалуйста, перезапустите игру.";
@@ -565,9 +664,18 @@
         // Function to save all game data to localStorage
         function saveGameData() {
             try {
-                localStorage.setItem(localStorageScoreKey, score.toFixed(2)); // Save score
-                localStorage.setItem(localStorageTapCoinsPerAdKey, tapCoinsPerAd.toFixed(2)); // Save multiplier
-                console.log("Game data saved:", { score: score, tapCoinsPerAd: tapCoinsPerAd });
+                localStorage.setItem(localStorageScoreKey, score.toFixed(2)); // Save main score
+                localStorage.setItem(localStorageTapCoinsPerAdKey, tapCoinsPerAd.toFixed(2)); // Save click multiplier
+                localStorage.setItem(localStoragePassiveIncomeRateKey, passiveIncomeRate.toFixed(3)); // Save passive income rate with 3 decimals
+                localStorage.setItem(localStorageLastLoginTimestampKey, lastLoginTimestamp.toString()); // Save last login timestamp
+                localStorage.setItem(localStorageAccumulatedPassiveIncomeKey, accumulatedPassiveIncome.toFixed(2)); // Save accumulated passive income
+                console.log("Game data saved:", {
+                    score: score,
+                    tapCoinsPerAd: tapCoinsPerAd,
+                    passiveIncomeRate: passiveIncomeRate,
+                    lastLoginTimestamp: lastLoginTimestamp,
+                    accumulatedPassiveIncome: accumulatedPassiveIncome
+                });
             } catch (error) {
                 console.error("Error saving game data to localStorage:", error);
             }
@@ -652,6 +760,52 @@
                 }, upgradeLoadingText, upgradeTimerDisplay, upgradeClickButton);
             });
         }
+
+        // Click event handler for the 'Улучшить пассивный доход' button
+        if (upgradePassiveIncomeButton) {
+            upgradePassiveIncomeButton.addEventListener('click', () => {
+                showMonetagAd(() => {
+                    let timeLeft = adTimerDuration;
+                    passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                    passiveIncomeTimerDisplay.classList.remove('hidden');
+                    passiveIncomeLoadingText.textContent = "";
+
+                    const passiveTimerInterval = setInterval(() => {
+                        timeLeft--;
+                        passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+
+                        if (timeLeft <= 0) {
+                            clearInterval(passiveTimerInterval);
+                            passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); // Increase by 0.001, fixed to 3 decimals
+                            passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3); // Update display on main page
+                            if (passiveIncomeRateDisplayImp) { // Update display on improvements page too
+                                passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
+                            }
+                            upgradePassiveIncomeButton.disabled = false;
+                            passiveIncomeTimerDisplay.classList.add('hidden');
+                            console.log('Passive income rate upgraded. Saving...');
+                            saveGameData();
+                        }
+                    }, 1000);
+                }, passiveIncomeLoadingText, passiveIncomeTimerDisplay, upgradePassiveIncomeButton);
+            });
+        }
+
+        // Click event handler for the 'Забрать пассивный доход' button
+        if (claimPassiveIncomeButton) {
+            claimPassiveIncomeButton.addEventListener('click', () => {
+                if (accumulatedPassiveIncome > 0) {
+                    score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
+                    accumulatedPassiveIncome = 0; // Reset accumulated
+                    scoreDisplay.textContent = score.toFixed(2); // Update main score display
+                    accumulatedPassiveIncomeDisplay.textContent = `Накоплено: ${accumulatedPassiveIncome.toFixed(2)} TapCoins`;
+                    claimPassiveIncomeButton.disabled = true; // Disable after claiming
+                    saveGameData(); // Save updated game data
+                    console.log("Passive income claimed!");
+                }
+            });
+        }
+
 
         // Initial load of game data and show main page when the page loads
         document.addEventListener('DOMContentLoaded', () => {
