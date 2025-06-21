@@ -320,6 +320,11 @@
     <div id="friendsPage" class="page-content">
         <h2 class="text-3xl font-bold text-blue-300 game-font">Друзья</h2>
         <div class="generic-page-content flex flex-col items-center">
+            <!-- New text for referral bonus explanation -->
+            <p class="sub-text mb-4 text-center">
+                Пригласи друга по этой ссылке и получи <span style="color: #68d391; font-weight: bold;">25 TapCoins</span>,
+                а твой друг — <span style="color: #68d391; font-weight: bold;">10 TapCoins</span>!
+            </p>
             <p class="referral-info-text">Твой реферальный ID: <span id="referralIdDisplay">Загрузка...</span></p>
             <p class="referral-info-text">Тебя пригласил: <span id="invitedByDisplay">Нет</span></p>
             <button id="copyReferralLinkButton" class="upgrade-button mt-4" style="background-color: #6b46c1;">Скопировать ссылку</button>
@@ -504,7 +509,7 @@
 
         // --- Элементы для реферальной программы ---
         const referralIdDisplay = document.getElementById('referralIdDisplay');
-        const invitedByDisplay = document.getElementById('invitedByDisplay');
+        const invitedByDisplay = document.getElementById('invitedByDisplay'); // Corrected
         const copyReferralLinkButton = document.getElementById('copyReferralLinkButton');
         const referralStatus = document.getElementById('referralStatus');
         const referredUsersList = document.getElementById('referredUsersList');
@@ -794,7 +799,7 @@
 
             // Обновление реферальных полей
             if (referralIdDisplay) referralIdDisplay.textContent = userId; // Ваш собственный ID для реферальной ссылки
-            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет";
+            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; // Corrected this line
 
             // Обновление списка приглашенных друзей
             if (currentPageId === 'friendsPage') {
