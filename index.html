@@ -365,7 +365,7 @@
     <div id="improvementsPage" class="page-content">
         <h2 class="text-3xl font-bold text-green-300 game-font">Улучшения</h2>
         <div class="generic-page-content flex flex-col items-center mb-4">
-            <p class="upgrade-info-text">Улучшить клик на 0.10 за рекламу</p>
+            <p class="upgrade-info-text">Улучшить клик на 0.10</p> <!-- Изменено: убрано "за рекламу" -->
             <button id="upgradeClickButton" class="upgrade-button">Улучшить клик</button>
             <p id="upgradeTimerDisplay" class="timer-text hidden"></p>
             <p id="upgradeLoadingText" class="loading-text"></p>
@@ -373,16 +373,30 @@
 
         <div class="generic-page-content flex flex-col items-center">
             <p class="upgrade-info-text">Пассивный доход: <span id="passiveIncomeRateDisplayImp">0.000</span> TapCoins/час</p>
-            <button id="upgradePassiveIncomeButton" class="upgrade-button">Улучшить пассивный доход (Реклама)</button>
+            <button id="upgradePassiveIncomeButton" class="upgrade-button">Улучшить пассивный доход</button> <!-- Изменено: убрано "(Реклама)" -->
             <p id="passiveIncomeTimerDisplay" class="timer-text hidden"></p>
             <p id="passiveIncomeLoadingText" class="loading-text"></p>
         </div>
     </div>
 
-    <!-- Games Page Content (Игры) - Reverted to simple placeholder -->
+    <!-- Games Page Content (Игры) -->
     <div id="gamesPage" class="page-content">
         <h2 class="text-3xl font-bold text-indigo-300 game-font">Игры</h2>
-        <p class="generic-page-content">В разработке. Скоро здесь появятся новые увлекательные игры!</p>
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Змейка</h3>
+            <p class="sub-text">Классическая игра "Змейка".</p>
+            <p class="sub-text text-yellow-400">В разработке...</p>
+        </div>
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Камень, ножницы, бумага</h3>
+            <p class="sub-text">Проверь свою удачу в этой игре.</p>
+            <p class="sub-text text-yellow-400">В разработке...</p>
+        </div>
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Колесо фортуны</h3>
+            <p class="sub-text">Вращай колесо и выигрывай TapCoins!</p>
+            <p class="sub-text text-yellow-400">В разработке...</p>
+        </div>
     </div>
 
     <!-- About Page Content (Об игре) -->
@@ -393,8 +407,13 @@
             <button class="sub-nav-button" data-subpage="description">Описание игры</button>
         </div>
         <div id="newsSubPage" class="sub-page-content active generic-page-content">
-            <span class="sub-heading">Новости</span><br>
-            <span class="sub-text">Следите за обновлениями!</span>
+            <span class="sub-heading">Последние новости</span><br>
+            <p class="sub-text text-left">
+                Приветствуем всех новых игроков! Игра TapMoney только что вышла, и мы очень рады видеть вас здесь.
+                В ближайшем будущем мы планируем добавить множество новых захватывающих игр, таких как "Змейка", "Камень, ножницы, бумага" и "Колесо фортуны".
+                Также в наших планах внедрение возможности обмена TapCoins на реальные деньги, так что следите за новостями!
+                Желаем вам хорошего времяпровождения и удачи в мире TapMoney!
+            </p>
         </div>
         <div id="descriptionSubPage" class="sub-page-content generic-page-content">
             <span class="sub-heading">Описание игры</span><br>
@@ -405,7 +424,14 @@
     <!-- Withdraw Page Content (Вывод) -->
     <div id="withdrawPage" class="page-content">
         <h2 class="text-3xl font-bold text-pink-300 game-font">Вывод</h2>
-        <p class="generic-page-content">В разработке, следите за новостями.</p>
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Вывод на Payeer</h3>
+            <p class="sub-text text-yellow-400">В разработке...</p>
+        </div>
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Вывод на LTC (Litecoin)</h3>
+            <p class="sub-text text-yellow-400">В разработке...</p>
+        </div>
     </div>
 
     <!-- Settings Page Content (Настройки) -->
