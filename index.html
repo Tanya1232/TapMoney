@@ -1,17 +1,20 @@
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TapMoney</title>
     <!-- Google Fonts - 'Bangers' for a cartoony/gamey feel, 'Press Start 2P' for pixelated/gamey feel -->
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Added 'Bubblegum Sans' for menu and button fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Bubblegum+Sans&display=swap" rel="stylesheet">
     <!-- Tailwind CSS import -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif; /* Fallback font */
             background-color: #1a202c; /* Fallback solid dark background */
-            background-image: url('d9913d442a634894d95237b7ff2fe83e_high.webp'); /* Your background image */
+            /* Обновленная ссылка на фоновое изображение */
+            background-image: url('https://github.com/Tanya1232/TapMoney/blob/main/Flux_Dev_Vibrant_cartoon_cityscape_panoramic_view_with_buildin_1.jpg?raw=true'); 
             background-size: cover; /* Cover the entire screen */
             background-position: center; /* Center the image */
             background-repeat: no-repeat; /* Do not repeat the image */
@@ -51,9 +54,11 @@
             box-sizing: border-box;
             text-align: center;
             padding-bottom: 140px; /* Space for the fixed two-row navbar */
+            /* Убраны opacity и transition для мгновенного переключения */
         }
         .page-content.active {
             display: flex; /* Show active page */
+            /* Убраны opacity для мгновенного переключения */
         }
 
         .score-text {
@@ -141,6 +146,7 @@
             z-index: 100; /* Ensure it's on top */
             box-shadow: none; /* Убрана тень */
             height: auto; /* Allow height to adjust for two rows */
+            font-family: 'Bubblegum Sans', cursive; /* Applied Bubblegum Sans */
         }
         .nav-button {
             background-color: transparent;
@@ -162,6 +168,7 @@
             white-space: nowrap; /* Prevent text wrapping */
             overflow: hidden; /* Hide overflowing text */
             text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+            font-family: 'Bubblegum Sans', cursive; /* Applied Bubblegum Sans */
         }
         .nav-button:hover {
             background-color: rgba(74, 85, 104, 0.5); /* Более прозрачный фон при наведении */
@@ -197,22 +204,28 @@
             margin-bottom: 10px;
         }
         .upgrade-button {
-            background-color: #48bb78; /* Green for upgrade button */
+            background-color: rgba(0, 123, 255, 0.2); /* Blue with 20% opacity */
             color: white;
             padding: 12px 25px;
             font-size: 1.1rem;
-            border: none;
+            border: none; /* Убрана рамка */
             border-radius: 10px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: none; /* Убрана тень, которая могла выглядеть как рамка */
+            outline: none; /* Убрана стандартная обводка при фокусе */
             margin-top: 20px;
+            font-family: 'Bubblegum Sans', cursive; /* Applied Bubblegum Sans */
         }
         .upgrade-button:hover:not(:disabled) {
-            background-color: #38a169;
+            background-color: rgba(0, 123, 255, 0.4); /* Darker transparent blue on hover */
+            border: none; /* Убедимся, что нет рамки при наведении */
+            box-shadow: none; /* Убедимся, что нет тени при наведении */
         }
         .upgrade-button:disabled {
-            background-color: #6b7280; /* Gray for disabled */
+            background-color: rgba(74, 85, 104, 0.5); /* Gray for disabled */
+            border: none; /* Убедимся, что нет рамки, когда кнопка отключена */
+            box-shadow: none; /* Убедимся, что нет тени, когда кнопка отключена */
             cursor: not-allowed;
         }
         .upgrade-info-text {
@@ -229,6 +242,7 @@
             padding: 5px 0;
             border-radius: 8px;
             margin-bottom: 20px;
+            font-family: 'Bubblegum Sans', cursive; /* Applied Bubblegum Sans */
         }
         .sub-nav-button {
             background-color: transparent;
@@ -241,6 +255,7 @@
             transition: background-color 0.2s ease, color 0.2s ease;
             flex-grow: 1; /* Make buttons fill space */
             text-align: center;
+            font-family: 'Bubblegum Sans', cursive; /* Applied Bubblegum Sans */
         }
         .sub-nav-button:hover {
             background-color: #4a5568;
@@ -278,7 +293,7 @@
         <p id="timerDisplay" class="timer-text hidden"></p>
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
         <p id="accumulatedPassiveIncomeDisplay" class="sub-text mt-4 game-font" style="font-size: 1.1rem; color: #a0f0a0;">Накоплено: <span id="accumulatedValue">0.000</span> TapCoins</p>
-        <button id="claimPassiveIncomeButton" class="upgrade-button mt-2" style="background-color: #007bff; /* Blue for claim button */">Забрать пассивный доход</button>
+        <button id="claimPassiveIncomeButton" class="upgrade-button mt-2">Забрать пассивный доход</button>
     </div>
 
     <!-- Shop Page Content (Магазин) -->
@@ -476,48 +491,41 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; 
         let isAuthReady = false; // Флаг готовности аутентификации
 
-        // --- Основные элементы игры ---
-        const scoreDisplay = document.getElementById('score');
-        const tapCoinsPerAdDisplay = document.getElementById('tapCoinsPerAdDisplay');
-        const clickButton = document.getElementById('clickButton');
-        const timerDisplay = document.getElementById('timerDisplay');
-        const loadingText = document.getElementById('loadingText');
-        const accumulatedValueDisplay = document.getElementById('accumulatedValue'); // Элемент для отображения накопленной суммы
+        // --- Основные элементы игры (объявляем их здесь, но получаем ссылки на них в DOMContentLoaded) ---
+        let scoreDisplay;
+        let tapCoinsPerAdDisplay;
+        let clickButton;
+        let timerDisplay;
+        let loadingText;
+        let accumulatedValueDisplay;
 
-        // --- Элементы страницы улучшений ---
-        const upgradeClickButton = document.getElementById('upgradeClickButton');
-        const upgradeTimerDisplay = document.getElementById('upgradeTimerDisplay');
-        const upgradeLoadingText = document.getElementById('upgradeLoadingText');
+        let upgradeClickButton;
+        let upgradeTimerDisplay;
+        let upgradeLoadingText;
 
-        // Элементы для пассивного дохода
-        const passiveIncomeRateDisplay = document.getElementById('passiveIncomeRateDisplay'); // На главной странице
-        const passiveIncomeRateDisplayImp = document.getElementById('passiveIncomeRateDisplayImp'); // На странице улучшений
-        const upgradePassiveIncomeButton = document.getElementById('upgradePassiveIncomeButton');
-        const passiveIncomeTimerDisplay = document.getElementById('passiveIncomeTimerDisplay');
-        const passiveIncomeLoadingText = document.getElementById('passiveIncomeLoadingText');
-        const accumulatedPassiveIncomeDisplay = document.getElementById('accumulatedPassiveIncomeDisplay'); // На главной странице
-        const claimPassiveIncomeButton = document.getElementById('claimPassiveIncomeButton');
+        let passiveIncomeRateDisplay;
+        let passiveIncomeRateDisplayImp;
+        let upgradePassiveIncomeButton;
+        let passiveIncomeTimerDisplay;
+        let passiveIncomeLoadingText;
+        let accumulatedPassiveIncomeDisplay;
+        let claimPassiveIncomeButton;
 
-        // --- Элементы подвкладок страницы "Об игре" ---
-        const aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
-        const aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
+        let aboutSubNavButtons;
+        let aboutSubPages;
 
-        // --- Элементы подвкладок страницы "Магазин" ---
-        const shopSubNavButtons = document.querySelectorAll('#shopPage .sub-nav-button');
-        const shopSubPages = document.querySelectorAll('#shopPage .sub-page-content');
+        let shopSubNavButtons;
+        let shopSubPages;
 
-        // --- Элементы для реферальной программы ---
-        const referralIdDisplay = document.getElementById('referralIdDisplay');
-        const invitedByDisplay = document.getElementById('invitedByDisplay'); // Corrected
-        const copyReferralLinkButton = document.getElementById('copyReferralLinkButton');
-        const referralStatus = document.getElementById('referralStatus');
-        const referredUsersList = document.getElementById('referredUsersList');
-        const noReferredUsers = document.getElementById('noReferredUsers');
+        let referralIdDisplay;
+        let invitedByDisplay;
+        let copyReferralLinkButton;
+        let referralStatus;
+        let referredUsersList;
+        let noReferredUsers;
 
-        // --- Элементы для задания "Вступи в группу" ---
-        const claimGroupTaskRewardButton = document.getElementById('claimGroupTaskRewardButton');
-        const groupTaskStatus = document.getElementById('groupTaskStatus');
-
+        let claimGroupTaskRewardButton;
+        let groupTaskStatus;
 
         // Игровые данные
         let score = 0;
@@ -533,14 +541,15 @@
 
 
         // --- Управление вкладками/страницами ---
-        const navButtons = document.querySelectorAll('.nav-button');
-        const pages = document.querySelectorAll('.page-content');
+        let navButtons; // Объявляем, но получаем ссылку в DOMContentLoaded
+        let pages; // Объявляем, но получаем ссылку в DOMContentLoaded
         let currentPageId = 'mainPage'; // Текущая активная страница
 
         // *** Все функции перемещены в начало для обеспечения их доступности перед вызовом ***
 
         // Функция для отображения конкретной страницы и скрытия остальных
         function showPage(pageId) {
+            // Убраны CSS переходы и задержки для мгновенного переключения
             pages.forEach(page => {
                 if (page.id === pageId) {
                     page.classList.add('active');
@@ -549,7 +558,7 @@
                 }
             });
 
-            // Обновление активного состояния кнопок навигации
+            // Обновление активного состояния кнопок навигации (это может происходить немедленно)
             navButtons.forEach(button => {
                 if (button.dataset.page + 'Page' === pageId) {
                     button.classList.add('active');
@@ -559,59 +568,52 @@
             });
 
             // Сброс сообщений о загрузке и таймеров при переключении страниц
-            loadingText.textContent = ""; 
-            timerDisplay.classList.add('hidden');
+            if (loadingText) loadingText.textContent = ""; 
+            if (timerDisplay) timerDisplay.classList.add('hidden');
             if (upgradeLoadingText) upgradeLoadingText.textContent = "";
             if (upgradeTimerDisplay) upgradeTimerDisplay.classList.add('hidden');
             if (passiveIncomeLoadingText) passiveIncomeLoadingText.textContent = "";
             if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
             // Скрыть сообщение о копировании ссылки
-            referralStatus.classList.add('hidden');
+            if (referralStatus) referralStatus.classList.add('hidden');
             // Скрыть статус задания
-            groupTaskStatus.textContent = "";
+            if (groupTaskStatus) groupTaskStatus.textContent = "";
 
 
             // Специфическая логика в зависимости от отображаемой страницы
             if (pageId === 'mainPage') {
-                // Кнопка будет включена только после успешной загрузки данных в loadGameData
-                clickButton.disabled = true; 
-                loadingText.textContent = "Загрузка данных..."; // Показываем загрузку, пока не загрузится
+                if (clickButton) clickButton.disabled = true; 
+                if (loadingText) loadingText.textContent = "Загрузка данных..."; 
 
                 if (isAuthReady && db && userId) { 
-                    loadGameData(); // Повторно загружаем данные, чтобы убедиться в свежести
-                } else {
-                    // Если Firebase еще не готов, пытаемся инициализировать
-                    initializeFirebase(); // DOMContentLoaded уже вызвал, но на всякий случай
-                }
+                    loadGameData(); 
+                } 
             } else if (pageId === 'improvementsPage') {
-                // Для страницы улучшений, убедиться, что кнопка улучшения клика правильно включена/выключена
-                 if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
-                    upgradeClickButton.disabled = true; // Все еще выключена, если реклама загружается/таймер идет
-                } else {
-                    upgradeClickButton.disabled = false;
-                }
-                // Обновить отображение пассивного дохода только на странице улучшений, если элемент существует
+                 if (upgradeTimerDisplay && upgradeLoadingText && upgradeClickButton) {
+                     if (!upgradeTimerDisplay.classList.contains('hidden') || upgradeLoadingText.textContent !== "") {
+                        upgradeClickButton.disabled = true; 
+                    } else {
+                        upgradeClickButton.disabled = false;
+                    }
+                 }
                 if (passiveIncomeRateDisplayImp) {
                     passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
                 }
             } else if (pageId === 'aboutPage') {
-                // Убедиться, что подстраница по умолчанию отображается в "Об игре"
-                showAboutSubPage('newsSubPage'); // Изменено на showAboutSubPage
+                if (aboutSubNavButtons.length > 0) showAboutSubPage('newsSubPage'); 
             } else if (pageId === 'friendsPage') {
                 // Загрузить и отобразить информацию о реферальной программе
-                updateReferralDisplays();
+                updateReferralDisplays(); 
             } else if (pageId === 'shopPage') {
-                // Убедиться, что подстраница по умолчанию отображается в "Магазине"
-                showShopSubPage('shopItemsSubPage');
+                if (shopSubNavButtons.length > 0) showShopSubPage('shopItemsSubPage');
             } else if (pageId === 'tasksPage') {
-                // Обновить статус задания "Вступи в группу"
                 updateGroupTaskStatus();
             }
-            currentPageId = pageId; // Обновить текущую страницу
+            currentPageId = pageId; 
         }
 
         // Функция для отображения конкретной подстраницы в "Об игре"
-        function showAboutSubPage(subPageId) { // Переименована для ясности
+        function showAboutSubPage(subPageId) { 
             aboutSubPages.forEach(subPage => {
                 if (subPage.id === subPageId) {
                     subPage.classList.add('active');
@@ -629,7 +631,7 @@
         }
 
         // Функция для отображения конкретной подстраницы в "Магазине"
-        function showShopSubPage(subPageId) { // Новая функция
+        function showShopSubPage(subPageId) { 
             shopSubPages.forEach(subPage => {
                 if (subPage.id === subPageId) {
                     subPage.classList.add('active');
@@ -646,116 +648,24 @@
             });
         }
 
-        // Добавление слушателей событий для кнопок основной навигации
-        navButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const pageToShow = button.dataset.page + 'Page';
-                showPage(pageToShow);
-            });
-        });
+        // Функция для обновления всех соответствующих элементов интерфейса
+        function updateDisplays() {
+            if (scoreDisplay) scoreDisplay.textContent = score.toFixed(2);
+            if (tapCoinsPerAdDisplay) tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
+            if (passiveIncomeRateDisplay) passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
+            
+            if (accumulatedValueDisplay) accumulatedValueDisplay.textContent = accumulatedPassiveIncome.toFixed(3); 
+            if (claimPassiveIncomeButton) claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome < 0.001); 
 
-        // Добавление слушателей событий для кнопок поднавигации "Об игре"
-        aboutSubNavButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const subPageToShow = button.dataset.subpage + 'SubPage';
-                showAboutSubPage(subPageToShow); // Изменено на showAboutSubPage
-            });
-        });
-
-        // Добавление слушателей событий для кнопок поднавигации "Магазин"
-        shopSubNavButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const subPageToShow = button.dataset.subpage + 'SubPage';
-                showShopSubPage(subPageToShow);
-            });
-        });
-
-
-        // --- Загрузка/сохранение игровых данных ---
-
-        // Функция для загрузки всех игровых данных из Firestore
-        async function loadGameData() {
-            console.log("loadGameData: Начало загрузки игровых данных.");
-            loadingText.textContent = "Загрузка игровых данных...";
-            clickButton.disabled = true; // Убеждаемся, что кнопка отключена во время загрузки
-
-            if (!db || !userId || !isAuthReady) {
-                console.error("loadGameData: Firestore или userId не инициализированы или аутентификация не готова. Пропускаем загрузку данных.");
-                loadingText.textContent = "Ошибка: база данных не готова.";
-                return;
+            if (passiveIncomeRateDisplayImp) {
+                passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
             }
 
-            try {
-                const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
-                const docSnap = await getDoc(userDocRef);
+            if (referralIdDisplay) referralIdDisplay.textContent = userId; 
+            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
 
-                let isNewUser = false;
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    score = parseFloat(data.score || 0);
-                    tapCoinsPerAd = parseFloat(data.tapCoinsPerAd || 1.00);
-                    passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
-                    lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
-                    accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
-                    invitedBy = data.invitedBy || null; // Загружаем ID пригласившего
-                    completedTasks = data.completedTasks || {}; // Загружаем выполненные задания
-                    console.log("loadGameData: Игровые данные загружены из Firestore:", data);
-                } else {
-                    console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
-                    isNewUser = true;
-                    score = 0;
-                    tapCoinsPerAd = 1.00;
-                    passiveIncomeRate = 0.000;
-                    lastLoginTimestamp = Date.now();
-                    accumulatedPassiveIncome = 0;
-                    invitedBy = null; // По умолчанию нет пригласившего
-                    completedTasks = {}; // Нет выполненных заданий
-                }
-
-                // Обработка реферальной программы при первом входе нового пользователя
-                const urlParams = new URLSearchParams(window.location.search);
-                const initialReferrerId = urlParams.get('startapp'); // Получаем ID реферера из URL
-
-                if (isNewUser && initialReferrerId && initialReferrerId !== userId) {
-                    // Если это новый пользователь и есть реферер в URL, и реферер не сам пользователь
-                    invitedBy = initialReferrerId; // Устанавливаем пригласившего
-                    score = parseFloat((score + NEW_USER_BONUS).toFixed(2)); // Начисляем бонус новому пользователю
-                    console.log(`Новый пользователь приглашен ${initialReferrerId}. Бонус ${NEW_USER_BONUS} TapCoins начислен.`);
-                    
-                    // Теперь награждаем реферера
-                    await awardReferralBonusToReferrer(initialReferrerId, userId);
-                }
-
-
-                // Расчет пассивного дохода, заработанного с последнего входа
-                const currentTime = Date.now();
-                const elapsedTimeMs = currentTime - lastLoginTimestamp;
-                const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); 
-
-                console.log(`loadGameData Debug: lastLoginTimestamp: ${new Date(lastLoginTimestamp).toLocaleString()}, currentTime: ${new Date(currentTime).toLocaleString()}`);
-                console.log(`loadGameData Debug: elapsedTimeMs: ${elapsedTimeMs}, elapsedTimeHours: ${elapsedTimeHours.toFixed(4)}`);
-                console.log(`loadGameData Debug: passiveIncomeRate: ${passiveIncomeRate.toFixed(3)}, initial accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
-
-
-                if (passiveIncomeRate > 0 && elapsedTimeHours > 0) {
-                    const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
-                    accumulatedPassiveIncome = accumulatedPassiveIncome + newlyAccumulated; // Убрали parseFloat и toFixed
-                    console.log(`loadGameData Debug: newlyAccumulated: ${newlyAccumulated.toFixed(4)}, final accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
-                }
-                lastLoginTimestamp = currentTime; // Обновление времени последнего входа
-
-                await saveGameData(); // Сохраняем обновленные данные (включая invitedBy и начальный бонус)
-
-                updateDisplays(); // Обновление всех элементов интерфейса
-
-                loadingText.textContent = ""; // Очистка сообщения о загрузке
-                clickButton.disabled = false; // Включение основной кнопки после успешной загрузки
-                console.log("loadGameData: Игровые данные загружены и кнопка активирована.");
-
-            } catch (error) {
-                console.error("loadGameData: ОШИБКА загрузки игровых данных из Firestore:", error);
-                loadingText.textContent = `Ошибка загрузки игры: ${error.message}. Перезапустите.`;
-                clickButton.disabled = true; // Кнопка остается выключенной при ошибке
+            if (currentPageId === 'tasksPage') {
+                updateGroupTaskStatus();
             }
         }
 
@@ -772,9 +682,9 @@
                     tapCoinsPerAd: tapCoinsPerAd,
                     passiveIncomeRate: passiveIncomeRate,
                     lastLoginTimestamp: lastLoginTimestamp,
-                    accumulatedPassiveIncome: accumulatedPassiveIncome, // Сохраняем без toFixed
-                    invitedBy: invitedBy, // Сохраняем ID пригласившего
-                    completedTasks: completedTasks // Сохраняем выполненные задания
+                    accumulatedPassiveIncome: accumulatedPassiveIncome, 
+                    invitedBy: invitedBy, 
+                    completedTasks: completedTasks 
                 };
                 await setDoc(userDocRef, dataToSave, { merge: true }); 
                 console.log("saveGameData: Игровые данные сохранены в Firestore:", dataToSave);
@@ -783,34 +693,128 @@
             }
         }
 
-        // Функция для обновления всех соответствующих элементов интерфейса
-        function updateDisplays() {
-            scoreDisplay.textContent = score.toFixed(2);
-            tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
-            // Проверяем существование элементов перед обновлением
-            if (passiveIncomeRateDisplay) passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
-            
-            // Отображаем накопленную сумму с тремя знаками после запятой
-            if (accumulatedValueDisplay) accumulatedValueDisplay.textContent = accumulatedPassiveIncome.toFixed(3); 
-            if (claimPassiveIncomeButton) claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome < 0.001); // Позволяем забрать, если больше 0.001
+        // Функция для загрузки всех игровых данных из Firestore
+        async function loadGameData() {
+            console.log("loadGameData: Начало загрузки игровых данных.");
+            if (loadingText) loadingText.textContent = "Загрузка игровых данных...";
+            if (clickButton) clickButton.disabled = true; 
 
-            if (passiveIncomeRateDisplayImp) {
-                passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
+            if (!db || !userId || !isAuthReady) {
+                console.error("loadGameData: Firestore или userId не инициализированы или аутентификация не готова. Пропускаем загрузку данных.");
+                if (loadingText) loadingText.textContent = "Ошибка: база данных не готова.";
+                if (clickButton) clickButton.disabled = true; 
+                return;
             }
 
-            // Обновление реферальных полей
-            if (referralIdDisplay) referralIdDisplay.textContent = userId; // Ваш собственный ID для реферальной ссылки
-            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; // Corrected this line
+            try {
+                const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                const docSnap = await getDoc(userDocRef);
 
-            // Обновление списка приглашенных друзей
-            if (currentPageId === 'friendsPage') {
-                updateReferredUsersList();
-            }
-            // Обновление статуса задания "Вступи в группу"
-            if (currentPageId === 'tasksPage') {
-                updateGroupTaskStatus();
+                let isNewUser = false;
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    score = parseFloat(data.score || 0);
+                    tapCoinsPerAd = parseFloat(data.tapCoinsPerAd || 1.00);
+                    passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
+                    lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
+                    accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
+                    invitedBy = data.invitedBy || null; 
+                    completedTasks = data.completedTasks || {}; 
+                    console.log("loadGameData: Игровые данные загружены из Firestore:", data);
+                } else {
+                    console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
+                    isNewUser = true;
+                    score = 0;
+                    tapCoinsPerAd = 1.00;
+                    passiveIncomeRate = 0.000;
+                    lastLoginTimestamp = Date.now();
+                    accumulatedPassiveIncome = 0;
+                    invitedBy = null; 
+                    completedTasks = {}; 
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const initialReferrerId = urlParams.get('startapp'); 
+
+                if (isNewUser && initialReferrerId && initialReferrerId !== userId) {
+                    invitedBy = initialReferrerId; 
+                    score = parseFloat((score + NEW_USER_BONUS).toFixed(2)); 
+                    console.log(`Новый пользователь приглашен ${initialReferrerId}. Бонус ${NEW_USER_BONUS} TapCoins начислен.`);
+                    
+                    await awardReferralBonusToReferrer(initialReferrerId, userId);
+                }
+
+                const currentTime = Date.now();
+                const elapsedTimeMs = currentTime - lastLoginTimestamp;
+                const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); 
+
+                console.log(`loadGameData Debug: lastLoginTimestamp: ${new Date(lastLoginTimestamp).toLocaleString()}, currentTime: ${new Date(currentTime).toLocaleString()}`);
+                console.log(`loadGameData Debug: elapsedTimeMs: ${elapsedTimeMs}, elapsedTimeHours: ${elapsedTimeHours.toFixed(4)}`);
+                console.log(`loadGameData Debug: passiveIncomeRate: ${passiveIncomeRate.toFixed(3)}, initial accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
+
+
+                if (passiveIncomeRate > 0 && elapsedTimeHours > 0) {
+                    const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
+                    accumulatedPassiveIncome = accumulatedPassiveIncome + newlyAccumulated; 
+                    console.log(`loadGameData Debug: newlyAccumulated: ${newlyAccumulated.toFixed(4)}, final accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
+                }
+                lastLoginTimestamp = currentTime; 
+
+                await saveGameData(); 
+
+                updateDisplays(); 
+
+                if (loadingText) loadingText.textContent = ""; 
+                if (clickButton) clickButton.disabled = false; 
+                console.log("loadGameData: Игровые данные загружены и кнопка активирована.");
+
+            } catch (error) {
+                console.error("loadGameData: ОШИБКА загрузки игровых данных из Firestore:", error);
+                if (loadingText) loadingText.textContent = `Ошибка загрузки игры: ${error.message}. Перезапустите.`;
+                if (clickButton) clickButton.disabled = true; 
             }
         }
+
+        // Инициализация Firebase и загрузка данных
+        const initializeFirebase = async () => { 
+            if (loadingText) loadingText.textContent = "Инициализация Firebase..."; 
+            console.log("initializeFirebase: Начинается инициализация Firebase.");
+            try {
+                if (!app) {
+                    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
+                        throw new Error("Конфигурация Firebase отсутствует или пуста.");
+                    }
+                    app = initializeApp(firebaseConfig);
+                    console.log("initializeFirebase: Приложение Firebase инициализировано.");
+                }
+                
+                if (!auth) {
+                    auth = getAuth(app);
+                    console.log("initializeFirebase: Auth Firebase инициализирован.");
+                }
+                if (!db) {
+                    db = getFirestore(app);
+                    console.log("initializeFirebase: Firestore Firebase инициализирован.");
+                }
+
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                    console.log("initializeFirebase: Вход выполнен анонимно.");
+                }
+
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log("initializeFirebase: ID пользователя:", userId);
+                isAuthReady = true; 
+                console.log("initializeFirebase: Firebase успешно инициализирован и аутентифицирован.");
+
+                await loadGameData(); 
+
+            } catch (error) {
+                console.error("initializeFirebase: КРИТИЧЕСКАЯ ОШИБКА: Firebase инициализация или аутентификация не удались:", error);
+                if (loadingText) loadingText.textContent = `Ошибка загрузки игры: ${error.message}. Перезапустите.`;
+                if (clickButton) clickButton.disabled = true; 
+            }
+        }; 
 
         // --- Логика реферальной программы ---
         async function awardReferralBonusToReferrer(referrerId, referredUserId) {
@@ -823,7 +827,6 @@
                 const referrerRef = doc(db, "artifacts", appId, "users", referrerId, "gameData", "progress");
                 const referralRecordRef = doc(db, "artifacts", appId, "users", referrerId, "referrals", referredUserId);
 
-                // Используем транзакцию для атомарности операций
                 await runTransaction(db, async (transaction) => {
                     const referrerDoc = await transaction.get(referrerRef);
                     const referralRecordDoc = await transaction.get(referralRecordRef);
@@ -838,12 +841,10 @@
                         return;
                     }
 
-                    // Обновляем счет реферера
                     const currentReferrerScore = parseFloat(referrerDoc.data().score || 0);
                     const newReferrerScore = parseFloat((currentReferrerScore + REFERRER_BONUS).toFixed(2));
                     transaction.update(referrerRef, { score: newReferrerScore });
 
-                    // Создаем запись о том, что бонус выдан
                     transaction.set(referralRecordRef, { timestamp: Date.now() });
 
                     console.log(`awardReferralBonusToReferrer: Бонус ${REFERRER_BONUS} TapCoins начислен рефереру ${referrerId} за приглашение ${referredUserId}.`);
@@ -855,69 +856,49 @@
 
         async function updateReferredUsersList() {
             if (!db || !userId) {
-                referredUsersList.innerHTML = '<li class="text-center text-gray-500">Ошибка загрузки друзей.</li>';
+                if (referredUsersList) referredUsersList.innerHTML = '<li class="text-center text-gray-500">Ошибка загрузки друзей.</li>';
                 return;
             }
 
-            referralIdDisplay.textContent = userId; // Убедиться, что ID реферера всегда отображается
-            invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет";
+            if (referralIdDisplay) referralIdDisplay.textContent = userId; 
+            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
 
-            referredUsersList.innerHTML = ''; // Очищаем список
-            noReferredUsers.classList.remove('hidden'); // Показываем сообщение по умолчанию
+            if (referredUsersList) referredUsersList.innerHTML = ''; 
+            if (noReferredUsers) noReferredUsers.classList.remove('hidden'); 
 
             try {
                 const usersCollectionRef = collection(db, "artifacts", appId, "users");
-                // Запрос всех документов пользователей, где 'invitedBy' равен текущему userId
-                // !!! ВНИМАНИЕ: Для этого запроса (where("gameData.progress.invitedBy", "==", userId)) может потребоваться создание индекса в Firestore.
-                // Если возникнет ошибка "The query requires an index...", нужно будет создать индекс вручную в консоли Firebase.
                 const q = query(usersCollectionRef, where("gameData.progress.invitedBy", "==", userId));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
                     console.log("У текущего пользователя нет приглашенных друзей.");
                 } else {
-                    noReferredUsers.classList.add('hidden'); // Скрываем сообщение
+                    if (noReferredUsers) noReferredUsers.classList.add('hidden'); 
                     querySnapshot.forEach((doc) => {
-                        const referredUserUID = doc.id; // UID приглашенного пользователя
-                        const referredUserName = `Пользователь ${referredUserUID.substring(0, 8)}...`; // Отображаем часть UID
+                        const referredUserUID = doc.id; 
+                        const referredUserName = `Пользователь ${referredUserUID.substring(0, 8)}...`; 
                         const listItem = document.createElement('li');
                         listItem.className = 'py-1 border-b border-gray-700 last:border-b-0 text-white';
                         listItem.textContent = referredUserName;
-                        referredUsersList.appendChild(listItem);
+                        if (referredUsersList) referredUsersList.appendChild(listItem);
                     });
                     console.log(`Найдено приглашенных друзей: ${querySnapshot.size}`);
                 }
             } catch (error) {
                 console.error("Ошибка загрузки списка приглашенных друзей:", error);
-                referredUsersList.innerHTML = '<li class="text-center text-red-400">Ошибка загрузки списка друзей.</li>';
+                if (referredUsersList) referredUsersList.innerHTML = '<li class="text-center text-red-400">Ошибка загрузки списка друзей.</li>';
             }
         }
 
-        // Копирование реферальной ссылки
-        copyReferralLinkButton.addEventListener('click', async () => {
-            // WEB_APP_URL здесь должен соответствовать тому, что в bot.py, но мы формируем ссылку относительно текущего местоположения.
-            const referralLink = `${window.location.origin}${window.location.pathname}?startapp=${userId}`;
-            try {
-                // Используем document.execCommand('copy') для совместимости с iframe
-                const tempInput = document.createElement('textarea');
-                tempInput.value = referralLink;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-
-                referralStatus.textContent = "Ссылка скопирована!";
-                referralStatus.classList.remove('hidden');
-                setTimeout(() => {
-                    referralStatus.classList.add('hidden');
-                }, 3000); // Скрыть сообщение через 3 секунды
-                console.log("Реферальная ссылка скопирована:", referralLink);
-            } catch (err) {
-                console.error("Ошибка копирования реферальной ссылки:", err);
-                referralStatus.textContent = "Ошибка при копировании ссылки.";
-                referralStatus.classList.remove('hidden');
-            }
-        });
+        // Добавляем эту функцию, так как она вызывается в showPage
+        async function updateReferralDisplays() {
+            if (referralIdDisplay) referralIdDisplay.textContent = userId; 
+            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
+            await updateReferredUsersList();
+            // updateDisplays() также вызывается, но для избежания лишних обновлений,
+            // сосредоточимся на специфичных для рефералов обновлениях здесь.
+        }
 
         // --- Логика задания "Вступить в группу" ---
         const JOIN_GROUP_TASK_ID = 'joinGroup';
@@ -929,76 +910,19 @@
             if (completedTasks[JOIN_GROUP_TASK_ID]) {
                 claimGroupTaskRewardButton.disabled = true;
                 groupTaskStatus.textContent = "Задание выполнено! Награда получена.";
-                groupTaskStatus.style.color = '#68d391'; // Зеленый
+                groupTaskStatus.style.color = '#68d391'; 
             } else {
                 claimGroupTaskRewardButton.disabled = false;
                 groupTaskStatus.textContent = "Нажмите 'Получить награду' после вступления в группу.";
-                groupTaskStatus.style.color = '#cbd5e0'; // Белый/светло-серый
+                groupTaskStatus.style.color = '#cbd5e0'; 
             }
         }
 
-        if (claimGroupTaskRewardButton) {
-            claimGroupTaskRewardButton.addEventListener('click', async () => {
-                if (!db || !userId || !isAuthReady) {
-                    groupTaskStatus.textContent = "Ошибка: база данных не готова.";
-                    groupTaskStatus.style.color = '#fc8181'; // Красный
-                    console.error("claimGroupTaskReward: Firestore или userId не инициализированы или аутентификация не готова.");
-                    return;
-                }
-
-                if (completedTasks[JOIN_GROUP_TASK_ID]) {
-                    groupTaskStatus.textContent = "Вы уже получили награду за это задание.";
-                    groupTaskStatus.style.color = '#f6ad55'; // Оранжевый
-                    return;
-                }
-
-                claimGroupTaskRewardButton.disabled = true;
-                groupTaskStatus.textContent = "Обработка награды...";
-                groupTaskStatus.style.color = '#63b3ed'; // Голубой
-
-                try {
-                    const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
-                    await runTransaction(db, async (transaction) => {
-                        const docSnap = await transaction.get(userDocRef);
-                        if (!docSnap.exists()) {
-                            throw new Error("Документ пользователя не найден.");
-                        }
-                        const currentData = docSnap.data();
-                        const currentScore = parseFloat(currentData.score || 0);
-                        const newScore = parseFloat((currentScore + JOIN_GROUP_REWARD).toFixed(2));
-                        const updatedCompletedTasks = { ...currentData.completedTasks, [JOIN_GROUP_TASK_ID]: true };
-
-                        transaction.update(userDocRef, { 
-                            score: newScore,
-                            completedTasks: updatedCompletedTasks
-                        });
-
-                        // Обновляем локальные переменные после успешной транзакции
-                        score = newScore;
-                        completedTasks = updatedCompletedTasks;
-                    });
-
-                    updateDisplays(); // Обновляем счет на экране
-                    updateGroupTaskStatus(); // Обновляем статус кнопки
-                    console.log(`Задание "${JOIN_GROUP_TASK_ID}" выполнено. Награда ${JOIN_GROUP_REWARD} TapCoins начислена.`);
-
-                } catch (error) {
-                    console.error("Ошибка при получении награды за задание 'Вступи в группу':", error);
-                    groupTaskStatus.textContent = `Ошибка: ${error.message}. Попробуйте позже.`;
-                    groupTaskStatus.style.color = '#fc8181'; // Красный
-                    claimGroupTaskRewardButton.disabled = false; // Разрешаем повторную попытку
-                }
-            });
-        }
-
-
-        // --- Функции для рекламы и игровой логики ---
-
         // Функция для вызова рекламного блока Monetag
         function showMonetagAd(callback, targetLoadingText, targetTimerDisplay, targetButton) {
-            targetButton.disabled = true;
-            targetTimerDisplay.classList.add('hidden');
-            targetLoadingText.textContent = 'Загрузка рекламы...'; // Показать текст загрузки для рекламы
+            if (targetButton) targetButton.disabled = true;
+            if (targetTimerDisplay) targetTimerDisplay.classList.add('hidden');
+            if (targetLoadingText) targetLoadingText.textContent = 'Загрузка рекламы...'; 
 
             if (typeof show_9473169 === 'function') {
                 console.log("showMonetagAd: Вызов рекламы Monetag...");
@@ -1008,167 +932,265 @@
                 }, 500); 
             } else {
                 console.warn("showMonetagAd: Функция show_9473169() не найдена. SDK Monetag мог еще не загрузиться или зона настроена по-другому.");
-                // Запасной вариант: если реклама не показывается, просто продолжить
-                // Возможно, здесь стоит добавить сообщение пользователю или более длительную задержку
                 setTimeout(() => {
                     if (callback) callback();
-                }, 3000); // Увеличим задержку для имитации просмотра рекламы, если SDK не загрузился
-            }
-        }
-
-        // Обработчик события клика для основной кнопки игры
-        clickButton.addEventListener('click', async () => { 
-            console.log("Click button clicked.");
-            showMonetagAd(async () => { 
-                let timeLeft = adTimerDuration;
-                timerDisplay.textContent = `До награды: ${timeLeft} сек`;
-                timerDisplay.classList.remove('hidden');
-                loadingText.textContent = ""; 
-
-                const timerInterval = setInterval(async () => { 
-                    timeLeft--;
-                    timerDisplay.textContent = `До награды: ${timeLeft} сек`;
-
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval); 
-                        score = parseFloat((score + tapCoinsPerAd).toFixed(2)); 
-                        updateDisplays(); 
-                        clickButton.disabled = false; 
-                        timerDisplay.classList.add('hidden'); 
-                        console.log('Клик: Счет увеличен, кнопка активна. Сохранение...');
-                        await saveGameData(); 
-                    }
-                }, 1000);
-            }, loadingText, timerDisplay, clickButton);
-        });
-
-        // Обработчик события клика для кнопки 'Улучшить клик'
-        if (upgradeClickButton) {
-            upgradeClickButton.addEventListener('click', async () => { 
-                console.log("Upgrade click button clicked.");
-                showMonetagAd(async () => { 
-                    let timeLeft = adTimerDuration;
-                    upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
-                    upgradeTimerDisplay.classList.remove('hidden');
-                    upgradeLoadingText.textContent = "";
-
-                    const upgradeTimerInterval = setInterval(async () => { 
-                        timeLeft--;
-                        upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
-
-                        if (timeLeft <= 0) {
-                            clearInterval(upgradeTimerInterval);
-                            tapCoinsPerAd = parseFloat((tapCoinsPerAd + 0.10).toFixed(2)); 
-                            updateDisplays(); 
-                            upgradeClickButton.disabled = false;
-                            upgradeTimerDisplay.classList.add('hidden');
-                            console.log('Улучшение клика: Множитель клика улучшен. Сохранение...');
-                            await saveGameData(); 
-                            // Повторное включение основной кнопки, если на главной странице и не в активном процессе рекламы
-                            if (currentPageId === 'mainPage' && timerDisplay.classList.contains('hidden') && loadingText.textContent === "") {
-                                clickButton.disabled = false;
-                            }
-                        }
-                    }, 1000);
-                }, upgradeLoadingText, upgradeTimerDisplay, upgradeClickButton);
-            });
-        }
-
-        // Обработчик события клика для кнопки 'Улучшить пассивный доход'
-        if (upgradePassiveIncomeButton) {
-            upgradePassiveIncomeButton.addEventListener('click', async () => { 
-                console.log("Upgrade passive income button clicked.");
-                showMonetagAd(async () => { 
-                    let timeLeft = adTimerDuration;
-                    passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
-                    passiveIncomeTimerDisplay.classList.remove('hidden');
-                    passiveIncomeLoadingText.textContent = "";
-
-                    const passiveTimerInterval = setInterval(async () => { 
-                        timeLeft--;
-                        passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
-
-                        if (timeLeft <= 0) {
-                            clearInterval(passiveTimerInterval);
-                            passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); 
-                            updateDisplays(); 
-                            upgradePassiveIncomeButton.disabled = false;
-                            passiveIncomeTimerDisplay.classList.add('hidden');
-                            console.log('Улучшение пассивного дохода: Скорость пассивного дохода улучшена. Сохранение...');
-                            await saveGameData();
-                        }
-                    }, 1000);
-                }, passiveIncomeLoadingText, passiveIncomeTimerDisplay, upgradePassiveIncomeButton);
-            });
-        }
-
-        // Обработчик события клика для кнопки 'Забрать пассивный доход'
-        if (claimPassiveIncomeButton) {
-            claimPassiveIncomeButton.addEventListener('click', async () => { 
-                console.log("Claim passive income button clicked.");
-                if (accumulatedPassiveIncome > 0.0001) { // Увеличиваем порог, чтобы избежать проблем с плавающей точкой
-                    score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
-                    accumulatedPassiveIncome = 0; 
-                    updateDisplays(); 
-                    await saveGameData(); 
-                    console.log("Пассивный доход забран!");
-                } else {
-                    console.log("Нет накопленного пассивного дохода для забирания.");
-                }
-            });
-        }
-
-        // Инициализация Firebase и загрузка данных
-        async function initializeFirebase() {
-            loadingText.textContent = "Инициализация Firebase..."; 
-            console.log("initializeFirebase: Начинается инициализация Firebase.");
-            try {
-                // Инициализация приложения Firebase, если оно еще не инициализировано
-                if (!app) {
-                    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
-                        throw new Error("Конфигурация Firebase отсутствует или пуста.");
-                    }
-                    app = initializeApp(firebaseConfig);
-                    console.log("initializeFirebase: Приложение Firebase инициализировано.");
-                }
-                
-                // Инициализация Auth и Firestore, если они еще не инициализированы
-                if (!auth) {
-                    auth = getAuth(app);
-                    console.log("initializeFirebase: Auth Firebase инициализирован.");
-                }
-                if (!db) {
-                    db = getFirestore(app);
-                    console.log("initializeFirebase: Firestore Firebase инициализирован.");
-                }
-
-                // ВАЖНО: Для развернутых приложений на GitHub Pages, __initial_auth_token не используется.
-                // Мы всегда будем использовать анонимную аутентификацию для публичного доступа.
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                    console.log("initializeFirebase: Вход выполнен анонимно.");
-                }
-
-                // Установка userId после успешной аутентификации
-                userId = auth.currentUser?.uid || crypto.randomUUID();
-                console.log("initializeFirebase: ID пользователя:", userId);
-                isAuthReady = true; // Установка флага, что аутентификация готова
-                console.log("initializeFirebase: Firebase успешно инициализирован и аутентифицирован.");
-
-                // Загрузка игровых данных из Firestore после инициализации
-                await loadGameData(); // Эта функция обновит UI и активирует кнопку
-
-            } catch (error) {
-                console.error("initializeFirebase: КРИТИЧЕСКАЯ ОШИБКА: Firebase инициализация или аутентификация не удались:", error);
-                loadingText.textContent = `Ошибка загрузки игры: ${error.message}. Перезапустите.`;
-                clickButton.disabled = true; // Кнопка остается выключенной при ошибке Firebase
-                isAuthReady = false; // Отмечаем аутентификацию как неготовую
+                }, 3000); 
             }
         }
 
         // Начальная загрузка игровых данных и отображение главной страницы при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOMContentLoaded: DOM полностью загружен. Начинается инициализация приложения.");
+            // Получаем ссылки на элементы DOM внутри DOMContentLoaded, когда они гарантированно существуют
+            scoreDisplay = document.getElementById('score');
+            tapCoinsPerAdDisplay = document.getElementById('tapCoinsPerAdDisplay');
+            clickButton = document.getElementById('clickButton');
+            timerDisplay = document.getElementById('timerDisplay');
+            loadingText = document.getElementById('loadingText');
+            accumulatedValueDisplay = document.getElementById('accumulatedValue');
+
+            upgradeClickButton = document.getElementById('upgradeClickButton');
+            upgradeTimerDisplay = document.getElementById('upgradeTimerDisplay');
+            upgradeLoadingText = document.getElementById('upgradeLoadingText');
+
+            passiveIncomeRateDisplay = document.getElementById('passiveIncomeRateDisplay');
+            passiveIncomeRateDisplayImp = document.getElementById('passiveIncomeRateDisplayImp');
+            upgradePassiveIncomeButton = document.getElementById('upgradePassiveIncomeButton');
+            passiveIncomeTimerDisplay = document.getElementById('passiveIncomeTimerDisplay');
+            passiveIncomeLoadingText = document.getElementById('passiveIncomeLoadingText');
+            accumulatedPassiveIncomeDisplay = document.getElementById('accumulatedPassiveIncomeDisplay');
+            claimPassiveIncomeButton = document.getElementById('claimPassiveIncomeButton');
+
+            aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
+            aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
+
+            shopSubNavButtons = document.querySelectorAll('#shopPage .sub-nav-button');
+            shopSubPages = document.querySelectorAll('#shopPage .sub-page-content');
+
+            referralIdDisplay = document.getElementById('referralIdDisplay');
+            invitedByDisplay = document.getElementById('invitedByDisplay');
+            copyReferralLinkButton = document.getElementById('copyReferralLinkButton');
+            referralStatus = document.getElementById('referralStatus');
+            referredUsersList = document.getElementById('referredUsersList');
+            noReferredUsers = document.getElementById('noReferredUsers');
+
+            claimGroupTaskRewardButton = document.getElementById('claimGroupTaskRewardButton');
+            groupTaskStatus = document.getElementById('groupTaskStatus');
+
+            navButtons = document.querySelectorAll('.nav-button');
+            pages = document.querySelectorAll('.page-content');
+
+            // --- Attach Event Listeners (теперь, когда элементы гарантированно существуют) ---
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const pageToShow = button.dataset.page + 'Page';
+                    showPage(pageToShow);
+                });
+            });
+
+            aboutSubNavButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const subPageToShow = button.dataset.subpage + 'SubPage';
+                    showAboutSubPage(subPageToShow);
+                });
+            });
+
+            shopSubNavButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const subPageToShow = button.dataset.subpage + 'SubPage';
+                    showShopSubPage(subPageToShow);
+                });
+            });
+
+            if (clickButton) {
+                clickButton.addEventListener('click', async () => { 
+                    console.log("Click button clicked.");
+                    showMonetagAd(async () => { 
+                        let timeLeft = adTimerDuration;
+                        if (timerDisplay) timerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                        if (timerDisplay) timerDisplay.classList.remove('hidden');
+                        if (loadingText) loadingText.textContent = ""; 
+
+                        const timerInterval = setInterval(async () => { 
+                            timeLeft--;
+                            if (timerDisplay) timerDisplay.textContent = `До награды: ${timeLeft} сек`;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(timerInterval); 
+                                score = parseFloat((score + tapCoinsPerAd).toFixed(2)); 
+                                updateDisplays(); 
+                                if (clickButton) clickButton.disabled = false; 
+                                if (timerDisplay) timerDisplay.classList.add('hidden'); 
+                                console.log('Клик: Счет увеличен, кнопка активна. Сохранение...');
+                                await saveGameData(); 
+                            }
+                        }, 1000);
+                    }, loadingText, timerDisplay, clickButton);
+                });
+            }
+
+            if (upgradeClickButton) {
+                upgradeClickButton.addEventListener('click', async () => { 
+                    console.log("Upgrade click button clicked.");
+                    showMonetagAd(async () => { 
+                        let timeLeft = adTimerDuration;
+                        if (upgradeTimerDisplay) upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                        if (upgradeTimerDisplay) upgradeTimerDisplay.classList.remove('hidden');
+                        if (upgradeLoadingText) upgradeLoadingText.textContent = "";
+
+                        const upgradeTimerInterval = setInterval(async () => { 
+                            timeLeft--;
+                            if (upgradeTimerDisplay) upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(upgradeTimerInterval);
+                                tapCoinsPerAd = parseFloat((tapCoinsPerAd + 0.10).toFixed(2)); 
+                                updateDisplays(); 
+                                if (upgradeClickButton) upgradeClickButton.disabled = false;
+                                if (upgradeTimerDisplay) upgradeTimerDisplay.classList.add('hidden');
+                                console.log('Улучшение клика: Множитель клика улучшен. Сохранение...');
+                                await saveGameData(); 
+                                if (currentPageId === 'mainPage' && timerDisplay && timerDisplay.classList.contains('hidden') && loadingText && loadingText.textContent === "") {
+                                    if (clickButton) clickButton.disabled = false;
+                                }
+                            }
+                        }, 1000);
+                    }, upgradeLoadingText, upgradeTimerDisplay, upgradeClickButton);
+                });
+            }
+
+            if (upgradePassiveIncomeButton) {
+                upgradePassiveIncomeButton.addEventListener('click', async () => { 
+                    console.log("Upgrade passive income button clicked.");
+                    showMonetagAd(async () => { 
+                        let timeLeft = adTimerDuration;
+                        if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                        if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.remove('hidden');
+                        if (passiveIncomeLoadingText) passiveIncomeLoadingText.textContent = "";
+
+                        const passiveTimerInterval = setInterval(async () => { 
+                            timeLeft--;
+                            if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(passiveTimerInterval);
+                                passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); 
+                                updateDisplays(); 
+                                if (upgradePassiveIncomeButton) upgradePassiveIncomeButton.disabled = false;
+                                if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
+                                console.log('Улучшение пассивного дохода: Скорость пассивного дохода улучшена. Сохранение...');
+                                await saveGameData();
+                            }
+                        }, 1000);
+                    }, passiveIncomeLoadingText, passiveIncomeTimerDisplay, upgradePassiveIncomeButton);
+                });
+            }
+
+            if (claimPassiveIncomeButton) {
+                claimPassiveIncomeButton.addEventListener('click', async () => { 
+                    console.log("Claim passive income button clicked.");
+                    if (accumulatedPassiveIncome > 0.0001) { 
+                        score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
+                        accumulatedPassiveIncome = 0; 
+                        updateDisplays(); 
+                        await saveGameData(); 
+                        console.log("Пассивный доход забран!");
+                    } else {
+                        console.log("Нет накопленного пассивного дохода для забирания.");
+                    }
+                });
+            }
+
+            if (copyReferralLinkButton) {
+                copyReferralLinkButton.addEventListener('click', async () => {
+                    const referralLink = `${window.location.origin}${window.location.pathname}?startapp=${userId}`;
+                    try {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = referralLink;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+
+                        if (referralStatus) {
+                            referralStatus.textContent = "Ссылка скопирована!";
+                            referralStatus.classList.remove('hidden');
+                            setTimeout(() => {
+                                referralStatus.classList.add('hidden');
+                            }, 3000); 
+                        }
+                        console.log("Реферальная ссылка скопирована:", referralLink);
+                    } catch (err) {
+                        console.error("Ошибка копирования реферальной ссылки:", err);
+                        if (referralStatus) {
+                            referralStatus.textContent = "Ошибка при копировании ссылки.";
+                            referralStatus.classList.remove('hidden');
+                        }
+                    }
+                });
+            }
+
+            if (claimGroupTaskRewardButton) {
+                claimGroupTaskRewardButton.addEventListener('click', async () => {
+                    if (!db || !userId || !isAuthReady) {
+                        if (groupTaskStatus) {
+                            groupTaskStatus.textContent = "Ошибка: база данных не готова.";
+                            groupTaskStatus.style.color = '#fc8181'; 
+                        }
+                        console.error("claimGroupTaskReward: Firestore или userId не инициализированы или аутентификация не готова.");
+                        return;
+                    }
+
+                    if (completedTasks[JOIN_GROUP_TASK_ID]) {
+                        if (groupTaskStatus) {
+                            groupTaskStatus.textContent = "Вы уже получили награду за это задание.";
+                            groupTaskStatus.style.color = '#f6ad55'; 
+                        }
+                        return;
+                    }
+
+                    if (claimGroupTaskRewardButton) claimGroupTaskRewardButton.disabled = true;
+                    if (groupTaskStatus) {
+                        groupTaskStatus.textContent = "Обработка награды...";
+                        groupTaskStatus.style.color = '#63b3ed'; 
+                    }
+
+                    try {
+                        const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                        await runTransaction(db, async (transaction) => {
+                            const docSnap = await transaction.get(userDocRef);
+                            if (!docSnap.exists()) {
+                                throw new Error("Документ пользователя не найден.");
+                            }
+                            const currentData = docSnap.data();
+                            const currentScore = parseFloat(currentData.score || 0);
+                            const newScore = parseFloat((currentScore + JOIN_GROUP_REWARD).toFixed(2));
+                            const updatedCompletedTasks = { ...currentData.completedTasks, [JOIN_GROUP_TASK_ID]: true };
+
+                            transaction.update(userDocRef, { 
+                                score: newScore,
+                                completedTasks: updatedCompletedTasks
+                            });
+
+                            score = newScore;
+                            completedTasks = updatedCompletedTasks;
+                        });
+
+                        updateDisplays(); 
+                        updateGroupTaskStatus(); 
+                        console.log(`Задание "${JOIN_GROUP_TASK_ID}" выполнено. Награда ${JOIN_GROUP_REWARD} TapCoins начислена.`);
+
+                    } catch (error) {
+                        console.error("Ошибка при получении награды за задание 'Вступи в группу':", error);
+                        if (groupTaskStatus) {
+                            groupTaskStatus.textContent = `Ошибка: ${error.message}. Попробуйте позже.`;
+                            groupTaskStatus.style.color = '#fc8181'; 
+                        }
+                        if (claimGroupTaskRewardButton) claimGroupTaskRewardButton.disabled = false; 
+                    }
+                });
+            }
+
             // Инициализация Telegram Web App
             if (window.Telegram && window.Telegram.WebApp) {
                 window.Telegram.WebApp.ready();
@@ -1177,7 +1199,7 @@
             }
 
             await initializeFirebase();
-            showPage('mainPage'); // Убедиться, что главная страница активна при загрузке
+            showPage('mainPage'); 
         });
 
         // Сохранение игровых данных при закрытии или скрытии приложения
