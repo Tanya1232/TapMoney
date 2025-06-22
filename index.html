@@ -79,23 +79,25 @@
             width: 100%;
         }
         .click-button {
-            /* Changed from solid blue to a more subtle background, image/icon will be inside */
-            background-color: rgba(59, 130, 246, 0.2); /* Very subtle transparent blue */
+            /* Убран background-color, так как фон будет изображением */
             border: 5px solid #3b82f6; /* Blue border to define circle */
-            /* Убраны font-size и color, так как теперь используется изображение */
             width: 180px; /* Fixed width for round shape */
             height: 180px; /* Fixed height for round shape */
             border-radius: 50%; /* Make it perfectly round */
             display: flex; /* Flexbox for centering content inside */
             justify-content: center;
             align-items: center;
-            border: none;
+            /* Устанавливаем изображение монеты как фон кнопки */
+            background-image: url('https://github.com/Tanya1232/TapMoney/blob/main/Flux_Dev_A_vibrant_shiny_cartoon_Tapcoin_gold_coin_with_a_simp_2.jpg?raw=true');
+            background-size: cover; /* Изображение полностью заполнит кнопку, обрезая лишнее */
+            background-position: center; /* Центрируем изображение */
+            background-repeat: no-repeat; /* Не повторяем изображение */
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.3s ease;
+            transition: transform 0.1s ease, box-shadow 0.2s ease, border-color 0.3s ease;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.6); /* Initial shadow and subtle glow */
             position: relative;
             flex-shrink: 0;
-            overflow: hidden; /* Hide anything outside the circle, especially for future image */
+            overflow: hidden; /* Hide anything outside the circle */
         }
         .click-button:hover:not(:disabled) {
             background-color: rgba(37, 99, 235, 0.3); /* Darker transparent blue on hover */
@@ -115,13 +117,8 @@
             box-shadow: none;
             transform: none;
         }
-        /* Стиль для изображения внутри кнопки */
-        .click-button img {
-            width: 100%; /* Изображение заполняет ширину кнопки */
-            height: 100%; /* Изображение заполняет высоту кнопки */
-            object-fit: contain; /* Сохраняет пропорции изображения, полностью показывая его внутри элемента */
-            border-radius: 50%; /* На всякий случай, если изображение не круглое */
-        }
+        /* Стиль для изображения внутри кнопки - удален, так как изображение теперь фон */
+        /* .click-button img { ... } */ 
         .timer-text {
             font-size: 1.2rem; /* Smaller timer text */
             color: #f6ad55; /* Orange for timer */
@@ -294,8 +291,7 @@
         <p class="multiplier-text game-font">За клик: <span id="tapCoinsPerAdDisplay">1.00</span></p>
         <p class="multiplier-text game-font" style="margin-bottom: 10px; color: #add8e6;">Пассивный доход: <span id="passiveIncomeRateDisplay">0.000</span> TapCoins/час</p>
         <button id="clickButton" class="click-button" disabled>
-            <!-- Изображение монетки вместо эмодзи -->
-            <img src="https://github.com/Tanya1232/TapMoney/blob/main/Flux_Dev_A_vibrant_shiny_cartoon_Tapcoin_gold_coin_with_a_simp_2.jpg?raw=true" alt="TapCoin Coin" class="click-button-image">
+            <!-- Изображение монетки теперь устанавливается через CSS background-image на самой кнопке -->
         </button>
         <p id="timerDisplay" class="timer-text hidden"></p>
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
@@ -687,6 +683,7 @@
                 const dataToSave = {
                     score: score,
                     tapCoinsPerAd: tapCoinsPerAd,
+                    // capturedAds: capturedAds, // Добавлено сохранение capturedAds - удалено, т.к. переменная не объявлена
                     passiveIncomeRate: passiveIncomeRate,
                     lastLoginTimestamp: lastLoginTimestamp,
                     accumulatedPassiveIncome: accumulatedPassiveIncome, 
@@ -722,6 +719,7 @@
                     const data = docSnap.data();
                     score = parseFloat(data.score || 0);
                     tapCoinsPerAd = parseFloat(data.tapCoinsPerAd || 1.00);
+                    // capturedAds = parseInt(data.capturedAds || 0); // Добавлена загрузка capturedAds - удалено
                     passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
                     lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
                     accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
@@ -733,6 +731,7 @@
                     isNewUser = true;
                     score = 0;
                     tapCoinsPerAd = 1.00;
+                    // capturedAds = 0; // Инициализация capturedAds для нового пользователя - удалено
                     passiveIncomeRate = 0.000;
                     lastLoginTimestamp = Date.now();
                     accumulatedPassiveIncome = 0;
@@ -977,7 +976,7 @@
             referralIdDisplay = document.getElementById('referralIdDisplay');
             invitedByDisplay = document.getElementById('invitedByDisplay');
             copyReferralLinkButton = document.getElementById('copyReferralLinkButton');
-            referralStatus = document.getElementById('referralStatus');
+            referralStatus = document.getElementById('referralStatus'); 
             referredUsersList = document.getElementById('referredUsersList');
             noReferredUsers = document.getElementById('noReferredUsers');
 
@@ -1164,6 +1163,7 @@
 
                     try {
                         const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                        
                         await runTransaction(db, async (transaction) => {
                             const docSnap = await transaction.get(userDocRef);
                             if (!docSnap.exists()) {
@@ -1171,17 +1171,18 @@
                             }
                             const currentData = docSnap.data();
                             const currentScore = parseFloat(currentData.score || 0);
-                            const newScore = parseFloat((currentScore + JOIN_GROUP_REWARD).toFixed(2));
-                            const updatedCompletedTasks = { ...currentData.completedTasks, [JOIN_GROUP_TASK_ID]: true };
+                            const newScoreForTransaction = parseFloat((currentScore + JOIN_GROUP_REWARD).toFixed(2));
+                            const updatedCompletedTasksForTransaction = { ...currentData.completedTasks, [JOIN_GROUP_TASK_ID]: true };
 
                             transaction.update(userDocRef, { 
-                                score: newScore,
-                                completedTasks: updatedCompletedTasks
+                                score: newScoreForTransaction,
+                                completedTasks: updatedCompletedTasksForTransaction
                             });
+                        }); // End of runTransaction
 
-                            score = newScore;
-                            completedTasks = updatedCompletedTasks;
-                        });
+                        // Обновляем локальное состояние игры после успешной транзакции
+                        // Вызов loadGameData() обновит все глобальные переменные и UI
+                        await loadGameData(); 
 
                         updateDisplays(); 
                         updateGroupTaskStatus(); 
@@ -1207,7 +1208,7 @@
 
             await initializeFirebase();
             showPage('mainPage'); 
-        });
+        }); // Correctly closing DOMContentLoaded
 
         // Сохранение игровых данных при закрытии или скрытии приложения
         window.addEventListener('beforeunload', saveGameData);
