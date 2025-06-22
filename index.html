@@ -8,178 +8,172 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif; /* Fallback font */
-            background-color: #1a202c; /* Fallback solid dark background */
-            background-image: url('d9913d442a634894d95237b7ff2fe83e_high.webp'); /* Your background image */
-            background-size: cover; /* Cover the entire screen */
-            background-position: center; /* Center the image */
-            background-repeat: no-repeat; /* Do not repeat the image */
-            background-attachment: fixed; /* Keep background fixed while scrolling (if content overflows) */
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            background-image: url('d9913d442a634894d95237b7ff2fe83e_high.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Space out header, content, footer */
+            justify-content: space-between;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 0; /* Remove body padding, elements within will have their own spacing */
+            padding: 0;
             box-sizing: border-box;
-            color: #e2e8f0; /* Light text */
-            overflow: hidden; /* Prevent scrolling if elements slightly overflow */
-            position: relative; /* For absolute positioning of navbar */
+            color: #e2e8f0;
+            overflow: hidden;
+            position: relative;
         }
-        /* Apply 'Bangers' font to game-specific elements */
         .game-font {
             font-family: 'Bangers', cursive;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* Stronger shadow for readability on image background */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
-        /* Apply 'Press Start 2P' for pixelated/game scores (though not used in this version) */
         .pixel-font {
             font-family: 'Press Start 2P', cursive;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
 
-        /* --- Common Page Styles --- */
         .page-content {
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex-grow: 1; /* Takes available space */
+            flex-grow: 1;
             width: 100%;
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            padding-bottom: 140px; /* Space for the fixed two-row navbar */
+            padding-bottom: 140px;
         }
         .page-content.active {
-            display: flex; /* Show active page */
+            display: flex;
         }
 
         .score-text {
-            font-size: 2.2rem; /* Further reduced font size for score */
-            font-weight: normal; /* Bangers is already bold, no need for extra bold */
-            color: #68d391; /* Green for score */
-            margin-bottom: 5px; /* Reduced margin */
+            font-size: 2.2rem;
+            font-weight: normal;
+            color: #68d391;
+            margin-bottom: 5px;
             text-align: center;
             width: 100%;
-            padding-top: 20px; /* Padding from top of screen */
+            padding-top: 20px;
         }
         .multiplier-text {
-            font-size: 1.5rem; /* Size for multiplier text */
+            font-size: 1.5rem;
             font-weight: normal;
-            color: #f6ad55; /* Orange for multiplier */
-            margin-bottom: 20px; /* Space below multiplier */
+            color: #f6ad55;
+            margin-bottom: 20px;
             text-align: center;
             width: 100%;
         }
         .click-button {
-            /* Changed from solid blue to a more subtle background, image/icon will be inside */
-            background-color: rgba(59, 130, 246, 0.2); /* Very subtle transparent blue */
-            border: 5px solid #3b82f6; /* Blue border to define circle */
-            color: white; /* Text color if any, or for emoji */
-            width: 180px; /* Fixed width for round shape */
-            height: 180px; /* Fixed height for round shape */
-            border-radius: 50%; /* Make it perfectly round */
-            font-size: 5rem; /* Large font size for the emoji/icon */
-            display: flex; /* Flexbox for centering content inside */
+            background-color: rgba(59, 130, 246, 0.2);
+            border: 5px solid #3b82f6;
+            color: white;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            font-size: 5rem;
+            display: flex;
             justify-content: center;
             align-items: center;
             border: none;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.3s ease;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.6); /* Initial shadow and subtle glow */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.6);
             position: relative;
             flex-shrink: 0;
-            overflow: hidden; /* Hide anything outside the circle, especially for future image */
+            overflow: hidden;
         }
         .click-button:hover:not(:disabled) {
-            background-color: rgba(37, 99, 235, 0.3); /* Darker transparent blue on hover */
-            border-color: #2563eb; /* Darker border on hover */
-            transform: scale(1.05); /* Slight enlarge on hover */
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5), 0 0 25px rgba(59, 130, 246, 0.8); /* Stronger shadow and glow */
+            background-color: rgba(37, 99, 235, 0.3);
+            border-color: #2563eb;
+            transform: scale(1.05);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5), 0 0 25px rgba(59, 130, 246, 0.8);
         }
         .click-button:active:not(:disabled) {
-            transform: scale(0.95); /* Deeper press effect */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), 0 0 10px rgba(59, 130, 246, 0.4); /* Smaller shadow and less glow on press */
-            background-color: rgba(37, 99, 235, 0.5); /* More opaque blue on press */
+            transform: scale(0.95);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), 0 0 10px rgba(59, 130, 246, 0.4);
+            background-color: rgba(37, 99, 235, 0.5);
         }
         .click-button:disabled {
-            background-color: rgba(74, 85, 104, 0.5); /* Gray for disabled button */
+            background-color: rgba(74, 85, 104, 0.5);
             border-color: #4a5568;
             cursor: not-allowed;
             box-shadow: none;
             transform: none;
         }
         .timer-text {
-            font-size: 1.2rem; /* Smaller timer text */
-            color: #f6ad55; /* Orange for timer */
-            margin-top: 20px; /* Space below button */
+            font-size: 1.2rem;
+            color: #f6ad55;
+            margin-top: 20px;
             text-align: center;
             width: 100%;
         }
         .loading-text {
-            font-size: 1rem; /* Smaller loading text */
+            font-size: 1rem;
             color: #a0aec0;
             margin-top: 10px;
             text-align: center;
             width: 100%;
         }
 
-        /* Navbar styles */
         .navbar {
             display: flex;
-            flex-wrap: wrap; /* Allow items to wrap to next line */
-            justify-content: space-around; /* Distribute items evenly with space around them */
-            align-items: flex-start; /* Align items to the top of the container */
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-items: flex-start;
             width: 100%;
-            background-color: rgba(45, 55, 72, 0.0); /* Сделано прозрачным */
-            padding: 8px 0; /* Reduced padding */
-            position: fixed; /* Fix at the bottom */
+            background-color: rgba(45, 55, 72, 0.0);
+            padding: 8px 0;
+            position: fixed;
             bottom: 0;
             left: 0;
-            z-index: 100; /* Ensure it's on top */
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3); /* Shadow on top */
-            height: auto; /* Allow height to adjust for two rows */
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+            height: auto;
         }
         .nav-button {
             background-color: transparent;
             border: none;
             color: #cbd5e0;
-            font-size: 0.7rem; /* Even smaller font size for button text */
-            padding: 6px 3px; /* Reduced padding for more compactness */
+            font-size: 0.7rem;
+            padding: 6px 3px;
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1px; /* Reduced gap between icon and text */
-            flex: 0 0 19%; /* Allow 5 buttons per row (100% / 5 = 20%, slightly less for spacing) */
-            max-width: 19%; /* Max width to ensure 5 per row */
-            box-sizing: border-box; /* Include padding in width calculation */
+            gap: 1px;
+            flex: 0 0 19%;
+            max-width: 19%;
+            box-sizing: border-box;
             text-align: center;
-            white-space: nowrap; /* Prevent text wrapping */
-            overflow: hidden; /* Hide overflowing text */
-            text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .nav-button:hover {
             background-color: #4a5568;
             color: white;
         }
         .nav-button.active {
-            background-color: #3b82f6; /* Highlight active button */
+            background-color: #3b82f6;
             color: white;
         }
         .nav-button-icon {
-            font-size: 1.1rem; /* Smaller icon size */
+            font-size: 1.1rem;
         }
 
-        /* Generic content styles for other pages */
         .generic-page-content {
             font-size: 1.5rem;
             color: #e2e8f0;
             padding: 20px;
-            background-color: rgba(0, 0, 0, 0.8); /* Changed to solid dark background */
+            background-color: rgba(0, 0, 0, 0.8);
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             max-width: 90%;
@@ -196,7 +190,7 @@
             margin-bottom: 10px;
         }
         .upgrade-button {
-            background-color: #48bb78; /* Green for upgrade button */
+            background-color: #48bb78;
             color: white;
             padding: 12px 25px;
             font-size: 1.1rem;
@@ -211,7 +205,7 @@
             background-color: #38a169;
         }
         .upgrade-button:disabled {
-            background-color: #6b7280; /* Gray for disabled */
+            background-color: #6b7280;
             cursor: not-allowed;
         }
         .upgrade-info-text {
@@ -219,12 +213,11 @@
             font-size: 1rem;
             margin-top: 10px;
         }
-        /* --- Styles for sub-tabs within 'About' page --- */
         .sub-navbar {
             display: flex;
             justify-content: space-around;
             width: 100%;
-            background-color: rgba(60, 70, 80, 0.8); /* Slightly lighter background for sub-navbar */
+            background-color: rgba(60, 70, 80, 0.8);
             padding: 5px 0;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -238,7 +231,7 @@
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
-            flex-grow: 1; /* Make buttons fill space */
+            flex-grow: 1;
             text-align: center;
         }
         .sub-nav-button:hover {
@@ -246,15 +239,15 @@
             color: white;
         }
         .sub-nav-button.active {
-            background-color: #3b82f6; /* Highlight active sub-button */
+            background-color: #3b82f6;
             color: white;
         }
         .sub-page-content {
-            display: none; /* Hidden by default */
+            display: none;
             width: 100%;
         }
         .sub-page-content.active {
-            display: block; /* Show active sub-page */
+            display: block;
         }
         .referral-info-text {
             font-size: 1rem;
@@ -262,7 +255,6 @@
             margin-top: 10px;
         }
 
-        /* Стили для скинов монетки */
         .coin-skin-selector {
             display: flex;
             justify-content: center;
@@ -277,9 +269,9 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            font-size: 1.5rem; /* Larger font for emoji */
-            width: 60px; /* Fixed width for button */
-            height: 60px; /* Fixed height for button */
+            font-size: 1.5rem;
+            width: 60px;
+            height: 60px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -301,11 +293,12 @@
         <p class="multiplier-text game-font">За клик: <span id="tapCoinsPerAdDisplay">1.00</span></p>
         <p class="multiplier-text game-font" style="margin-bottom: 10px; color: #add8e6;">Пассивный доход: <span id="passiveIncomeRateDisplay">0.000</span> TapCoins/час</p>
         <button id="clickButton" class="click-button" disabled>
-            💰 </button>
+            💰
+        </button>
         <p id="timerDisplay" class="timer-text hidden"></p>
         <p id="loadingText" class="loading-text">Загрузка данных...</p>
         <p id="accumulatedPassiveIncomeDisplay" class="sub-text mt-4 game-font" style="font-size: 1.1rem; color: #a0f0a0;">Накоплено: <span id="accumulatedValue">0.000</span> TapCoins</p>
-        <button id="claimPassiveIncomeButton" class="upgrade-button mt-2" style="background-color: #007bff; /* Blue for claim button */">Забрать пассивный доход</button>
+        <button id="claimPassiveIncomeButton" class="upgrade-button mt-2" style="background-color: #007bff;">Забрать пассивный доход</button>
     </div>
 
     <div id="shopPage" class="page-content">
@@ -327,7 +320,7 @@
             <h3 class="sub-heading">Выбери свой скин монетки</h3>
             <p class="sub-text">Твоя текущая монетка: <span id="currentCoinSkin">💰</span></p>
             <div id="coinSkinSelector" class="coin-skin-selector">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -347,6 +340,7 @@
             <button id="claimDailyBonusButton" class="upgrade-button">Забрать бонус</button>
             <p id="dailyBonusStatus" class="sub-text mt-2"></p>
         </div>
+
         <div class="generic-page-content flex flex-col items-center mb-4">
             <h3 class="sub-heading">Другие задания</h3>
             <p class="sub-text">Больше ежедневных и еженедельных заданий скоро появятся здесь!</p>
@@ -433,44 +427,52 @@
 
     <div class="navbar">
         <button class="nav-button" data-page="main">
-            <span class="nav-button-icon">🏠</span> Главная
+            <span class="nav-button-icon">🏠</span>
+            Главная
         </button>
         <button class="nav-button" data-page="shop">
-            <span class="nav-button-icon">🛒</span> Магазин
+            <span class="nav-button-icon">🛒</span>
+            Магазин
         </button>
         <button class="nav-button" data-page="tasks">
-            <span class="nav-button-icon">✅</span> Задания
+            <span class="nav-button-icon">✅</span>
+            Задания
         </button>
         <button class="nav-button" data-page="friends">
-            <span class="nav-button-icon">🤝</span> Друзья
+            <span class="nav-button-icon">🤝</span>
+            Друзья
         </button>
         <button class="nav-button" data-page="stats">
-            <span class="nav-button-icon">📊</span> Статистика
+            <span class="nav-button-icon">📊</span>
+            Статистика
         </button>
         <button class="nav-button" data-page="improvements">
-            <span class="nav-button-icon">✨</span> Улучшения
+            <span class="nav-button-icon">✨</span>
+            Улучшения
         </button>
         <button class="nav-button" data-page="games">
-            <span class="nav-button-icon">🎮</span> Игры
+            <span class="nav-button-icon">🎮</span>
+            Игры
         </button>
         <button class="nav-button" data-page="about">
-            <span class="nav-button-icon">ℹ️</span> Об игре
+            <span class="nav-button-icon">ℹ️</span>
+            Об игре
         </button>
         <button class="nav-button" data-page="withdraw">
-            <span class="nav-button-icon">💸</span> Вывод
+            <span class="nav-button-icon">💸</span>
+            Вывод
         </button>
         <button class="nav-button" data-page="settings">
-            <span class="nav-button-icon">⚙️</span> Настройки
+            <span class="nav-button-icon">⚙️</span>
+            Настройки
         </button>
     </div>
 
     <script type="module">
-        // Импорт модулей Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, query, collection, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Конфигурация Firebase для вашего веб-приложения (ваша конфигурация, полученная из Firebase Console)
         const firebaseConfig = {
             apiKey: "AIzaSyBxymJpyy8rkoNxpGA2AJPow1dsq1VuC1U",
             authDomain: "tapmoney-game.firebaseapp.com",
@@ -481,15 +483,13 @@
             measurementId: "G-NC4FZ5MENZ"
         };
 
-        // Переменные Firebase
         let app;
         let db;
         let auth;
         let userId;
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
-        let isAuthReady = false; // Флаг готовности аутентификации
+        let isAuthReady = false;
 
-        // --- Основные элементы игры ---
         const scoreDisplay = document.getElementById('score');
         const tapCoinsPerAdDisplay = document.getElementById('tapCoinsPerAdDisplay');
         const clickButton = document.getElementById('clickButton');
@@ -497,12 +497,10 @@
         const loadingText = document.getElementById('loadingText');
         const accumulatedValueDisplay = document.getElementById('accumulatedValue');
 
-        // --- Элементы страницы улучшений ---
         const upgradeClickButton = document.getElementById('upgradeClickButton');
         const upgradeTimerDisplay = document.getElementById('upgradeTimerDisplay');
         const upgradeLoadingText = document.getElementById('upgradeLoadingText');
 
-        // Элементы для пассивного дохода
         const passiveIncomeRateDisplay = document.getElementById('passiveIncomeRateDisplay');
         const passiveIncomeRateDisplayImp = document.getElementById('passiveIncomeRateDisplayImp');
         const upgradePassiveIncomeButton = document.getElementById('upgradePassiveIncomeButton');
@@ -511,19 +509,15 @@
         const accumulatedPassiveIncomeDisplay = document.getElementById('accumulatedPassiveIncomeDisplay');
         const claimPassiveIncomeButton = document.getElementById('claimPassiveIncomeButton');
 
-        // --- Элементы подвкладок страницы "Об игре" ---
         const aboutSubNavButtons = document.querySelectorAll('#aboutPage .sub-nav-button');
         const aboutSubPages = document.querySelectorAll('#aboutPage .sub-page-content');
 
-        // --- Элементы подвкладок страницы "Магазин" ---
         const shopSubNavButtons = document.querySelectorAll('#shopPage .sub-nav-button');
         const shopSubPages = document.querySelectorAll('#shopPage .sub-page-content');
-        const coinSkinsSubPage = document.getElementById('coinSkinsSubPage'); // Добавлено
-        const currentCoinSkinDisplay = document.getElementById('currentCoinSkin'); // Добавлено
-        const coinSkinSelector = document.getElementById('coinSkinSelector'); // Добавлено
+        const coinSkinsSubPage = document.getElementById('coinSkinsSubPage');
+        const currentCoinSkinDisplay = document.getElementById('currentCoinSkin');
+        const coinSkinSelector = document.getElementById('coinSkinSelector');
 
-
-        // --- Элементы для реферальной программы ---
         const referralIdDisplay = document.getElementById('referralIdDisplay');
         const invitedByDisplay = document.getElementById('invitedByDisplay');
         const copyReferralLinkButton = document.getElementById('copyReferralLinkButton');
@@ -531,38 +525,31 @@
         const referredUsersList = document.getElementById('referredUsersList');
         const noReferredUsers = document.getElementById('noReferredUsers');
 
-        // --- Элементы для задания "Вступи в группу" ---
         const claimGroupTaskRewardButton = document.getElementById('claimGroupTaskRewardButton');
         const groupTaskStatus = document.getElementById('groupTaskStatus');
 
-        // --- НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ЕЖЕДНЕВНОГО БОНУСА ---
         const claimDailyBonusButton = document.getElementById('claimDailyBonusButton');
         const dailyBonusStatus = document.getElementById('dailyBonusStatus');
-        const DAILY_BONUS_AMOUNT = 1; // 1 TapCoin
+        const DAILY_BONUS_AMOUNT = 1;
         const DAILY_BONUS_TASK_ID = 'dailyBonus';
-        // --- КОНЕЦ НОВЫХ ПЕРЕМЕННЫХ ---
 
-        // Игровые данные
         let score = 0;
-        let tapCoinsPerAd = 1.00; // Начальное значение монет за рекламу
-        const adTimerDuration = 15; // Длительность таймера в секундах (15 или 30)
-        let passiveIncomeRate = 0.000; // TapCoins в час
-        let lastLoginTimestamp = Date.now(); // Время последнего входа в приложение
-        let accumulatedPassiveIncome = 0; // Накопленный доход с последнего входа
-        let invitedBy = null; // ID пользователя, который пригласил текущего пользователя
-        const NEW_USER_BONUS = 10; // Бонус для нового пользователя, пришедшего по реферальной ссылке
-        const REFERRER_BONUS = 25; // Бонус для реферера за каждого приглашенного
-        let completedTasks = {}; // Объект для хранения выполненных заданий: { 'taskId': true }
-        let currentCoinSkin = '💰'; // Текущий скин монетки по умолчанию
-        const availableCoinSkins = ['💰', '💎', '🌟', '🪙', '🚀']; // Доступные скины монет
+        let tapCoinsPerAd = 1.00;
+        const adTimerDuration = 15;
+        let passiveIncomeRate = 0.000;
+        let lastLoginTimestamp = Date.now();
+        let accumulatedPassiveIncome = 0;
+        let invitedBy = null;
+        const NEW_USER_BONUS = 10;
+        const REFERRER_BONUS = 25;
+        let completedTasks = {};
+        let currentCoinSkin = '💰';
+        const availableCoinSkins = ['💰', '💎', '🌟', '🪙', '🚀'];
 
-
-        // --- Управление вкладками/страницами ---
         const navButtons = document.querySelectorAll('.nav-button');
         const pages = document.querySelectorAll('.page-content');
-        let currentPageId = 'mainPage'; // Текущая активная страница
+        let currentPageId = 'mainPage';
 
-        // Функция для отображения конкретной страницы и скрытия остальных
         function showPage(pageId) {
             pages.forEach(page => {
                 if (page.id === pageId) {
@@ -572,7 +559,6 @@
                 }
             });
 
-            // Обновление активного состояния кнопок навигации
             navButtons.forEach(button => {
                 if (button.dataset.page + 'Page' === pageId) {
                     button.classList.add('active');
@@ -581,20 +567,16 @@
                 }
             });
 
-            // Сброс сообщений о загрузке и таймеров при переключении страниц
             loadingText.textContent = "";
             timerDisplay.classList.add('hidden');
             if (upgradeLoadingText) upgradeLoadingText.textContent = "";
             if (upgradeTimerDisplay) upgradeTimerDisplay.classList.add('hidden');
             if (passiveIncomeLoadingText) passiveIncomeLoadingText.textContent = "";
             if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
-            // Скрыть сообщение о копировании ссылки
             referralStatus.classList.add('hidden');
-            // Скрыть статус задания
             groupTaskStatus.textContent = "";
-            dailyBonusStatus.textContent = ""; // Очищаем статус ежедневного бонуса
+            dailyBonusStatus.textContent = "";
 
-            // Специфическая логика в зависимости от отображаемой страницы
             if (pageId === 'mainPage') {
                 clickButton.disabled = true;
                 loadingText.textContent = "Загрузка данных...";
@@ -618,8 +600,8 @@
             } else if (pageId === 'friendsPage') {
                 updateReferralDisplays();
             } else if (pageId === 'shopPage') {
-                showShopSubPage('shopItemsSubPage'); // По умолчанию показываем предметы
-                renderCoinSkins(); // Обновляем список скинов монетки при переходе на страницу магазина
+                showShopSubPage('shopItemsSubPage');
+                renderCoinSkins();
             } else if (pageId === 'tasksPage') {
                 updateGroupTaskStatus();
                 updateDailyBonusTaskStatus();
@@ -627,7 +609,6 @@
             currentPageId = pageId;
         }
 
-        // Функция для отображения конкретной подстраницы в "Об игре"
         function showAboutSubPage(subPageId) {
             aboutSubPages.forEach(subPage => {
                 if (subPage.id === subPageId) {
@@ -645,7 +626,6 @@
             });
         }
 
-        // Функция для отображения конкретной подстраницы в "Магазине"
         function showShopSubPage(subPageId) {
             shopSubPages.forEach(subPage => {
                 if (subPage.id === subPageId) {
@@ -663,7 +643,6 @@
             });
         }
 
-        // Добавление слушателей событий для кнопок основной навигации
         navButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const pageToShow = button.dataset.page + 'Page';
@@ -671,7 +650,6 @@
             });
         });
 
-        // Добавление слушателей событий для кнопок поднавигации "Об игре"
         aboutSubNavButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const subPageToShow = button.dataset.subpage + 'SubPage';
@@ -679,7 +657,6 @@
             });
         });
 
-        // Добавление слушателей событий для кнопок поднавигации "Магазин"
         shopSubNavButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const subPageToShow = button.dataset.subpage + 'SubPage';
@@ -687,23 +664,20 @@
             });
         });
 
-        // --- Логика игры ---
         function updateDisplays() {
             scoreDisplay.textContent = score.toFixed(2);
             tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
-            passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3); // На главной
-            if (passiveIncomeRateDisplayImp) { // На странице улучшений
+            passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
+            if (passiveIncomeRateDisplayImp) {
                 passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
             }
-            // Обновляем отображение накопленного пассивного дохода
             accumulatedValueDisplay.textContent = accumulatedPassiveIncome.toFixed(3);
-            claimPassiveIncomeButton.disabled = accumulatedPassiveIncome < 0.001; // Кнопка активна, если есть что забрать
-            clickButton.textContent = currentCoinSkin; // Обновляем скин монетки на главной кнопке
-            currentCoinSkinDisplay.textContent = currentCoinSkin; // Обновляем текущий скин в магазине
-            renderCoinSkins(); // Перерисовываем скины в магазине, чтобы обновить активное состояние
+            claimPassiveIncomeButton.disabled = accumulatedPassiveIncome < 0.001;
+            clickButton.textContent = currentCoinSkin;
+            currentCoinSkinDisplay.textContent = currentCoinSkin;
+            renderCoinSkins();
         }
 
-        // Функция сохранения данных
         async function saveGameData() {
             if (!db || !userId) {
                 console.error("saveGameData: Firestore или userId не инициализированы.");
@@ -715,18 +689,17 @@
                     score: parseFloat(score.toFixed(2)),
                     tapCoinsPerAd: parseFloat(tapCoinsPerAd.toFixed(2)),
                     passiveIncomeRate: parseFloat(passiveIncomeRate.toFixed(3)),
-                    lastLoginTimestamp: Date.now(), // Обновляем время последнего входа при сохранении
+                    lastLoginTimestamp: Date.now(),
                     invitedBy: invitedBy,
                     completedTasks: completedTasks,
-                    currentCoinSkin: currentCoinSkin // Сохраняем выбранный скин
-                }, { merge: true }); // Используем merge, чтобы не перезаписывать весь документ
+                    currentCoinSkin: currentCoinSkin
+                }, { merge: true });
                 console.log("Игровые данные сохранены.");
             } catch (error) {
                 console.error("Ошибка при сохранении игровых данных:", error);
             }
         }
 
-        // Функция загрузки данных
         async function loadGameData() {
             loadingText.textContent = "Загрузка игровых данных...";
             console.log("loadGameData: Загрузка данных для пользователя:", userId);
@@ -742,7 +715,7 @@
                     lastLoginTimestamp = data.lastLoginTimestamp || Date.now();
                     invitedBy = data.invitedBy || null;
                     completedTasks = data.completedTasks || {};
-                    currentCoinSkin = data.currentCoinSkin || '💰'; // Загружаем скин монетки
+                    currentCoinSkin = data.currentCoinSkin || '💰';
 
                     const now = Date.now();
                     const timeElapsedHours = (now - lastLoginTimestamp) / (1000 * 60 * 60);
@@ -803,7 +776,6 @@
             }
         }
 
-        // --- Firebase Инициализация и Аутентификация ---
         function initializeFirebase() {
             if (app) {
                 console.log("Firebase уже инициализирован.");
@@ -818,9 +790,9 @@
                     if (user) {
                         userId = user.uid;
                         console.log("Firebase: Пользователь аутентифицирован. UID:", userId);
-                        isAuthReady = true; // Устанавливаем флаг готовности
-                        await loadGameData(); // Загружаем данные пользователя после аутентификации
-                        updateDisplays(); // Обновляем UI после загрузки
+                        isAuthReady = true;
+                        await loadGameData();
+                        updateDisplays();
                     } else {
                         console.log("Firebase: Анонимный вход...");
                         signInAnonymously(auth)
@@ -839,7 +811,6 @@
             }
         }
 
-        // --- Обработчик клика по кнопке ---
         if (clickButton) {
             clickButton.addEventListener('click', () => {
                 if (!window.Monetag || !window.Monetag.showAd) {
@@ -865,29 +836,19 @@
                         loadingText.textContent = "Награда получена!";
                         setTimeout(() => {
                             loadingText.textContent = "";
-                            clickButton.disabled = false; // Включаем кнопку после завершения цикла
-                        }, 1000); // Скрываем сообщение через 1 секунду
+                            clickButton.disabled = false;
+                        }, 1000);
 
-                        // Начисление монет после просмотра рекламы
                         score += tapCoinsPerAd;
                         updateDisplays();
                         saveGameData();
                     }
                 }, 1000);
 
-                // Показ рекламы через Monetag SDK
-                window.Monetag.showAd('9473169', {
-                    //callbacks: {
-                        //onAdLoaded: () => console.log('Monetag: Ad loaded'),
-                        //onAdDisplayed: () => console.log('Monetag: Ad displayed'),
-                        //onAdFailed: (error) => console.error('Monetag: Ad failed', error),
-                        //onAdClosed: () => console.log('Monetag: Ad closed')
-                    //}
-                });
+                window.Monetag.showAd('9473169', {});
             });
         }
 
-        // --- Обработчики улучшений ---
         if (upgradeClickButton) {
             upgradeClickButton.addEventListener('click', () => {
                 if (!window.Monetag || !window.Monetag.showAd) {
@@ -952,7 +913,7 @@
                             upgradePassiveIncomeButton.disabled = false;
                         }, 1000);
 
-                        passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); // Увеличение на 0.001 в час
+                        passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3));
                         updateDisplays();
                         saveGameData();
                     }
@@ -962,7 +923,6 @@
             });
         }
 
-        // Обработчик кнопки "Забрать пассивный доход"
         if (claimPassiveIncomeButton) {
             claimPassiveIncomeButton.addEventListener('click', async () => {
                 if (accumulatedPassiveIncome > 0) {
@@ -976,17 +936,15 @@
                             const currentData = docSnap.data();
                             const currentScore = parseFloat(currentData.score || 0);
 
-                            // Добавляем накопленный доход к текущему счету
                             const newScore = parseFloat((currentScore + accumulatedPassiveIncome).toFixed(2));
 
                             transaction.update(userDocRef, {
                                 score: newScore,
-                                lastLoginTimestamp: Date.now() // Обновляем время последнего входа
+                                lastLoginTimestamp: Date.now()
                             });
 
-                            // Обновляем локальные переменные после успешной транзакции
                             score = newScore;
-                            accumulatedPassiveIncome = 0; // Сбрасываем накопленный доход
+                            accumulatedPassiveIncome = 0;
                         });
 
                         updateDisplays();
@@ -994,13 +952,11 @@
 
                     } catch (error) {
                         console.error("Ошибка при сборе пассивного дохода:", error);
-                        // Оповещение пользователя об ошибке
                     }
                 }
             });
         }
 
-        // --- Логика реферальной программы ---
         async function updateReferralDisplays() {
             if (!userId) {
                 referralIdDisplay.textContent = "Загрузка...";
@@ -1011,19 +967,19 @@
             invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет";
 
             if (referredUsersList) {
-                referredUsersList.innerHTML = ''; // Очищаем список
-                noReferredUsers.classList.add('hidden'); // Скрываем сообщение "Пока нет"
+                referredUsersList.innerHTML = '';
+                noReferredUsers.classList.add('hidden');
 
                 try {
                     const q = query(collection(db, "artifacts", appId, "users"), where("gameData.progress.invitedBy", "==", userId));
                     const querySnapshot = await getDocs(q);
 
                     if (querySnapshot.empty) {
-                        noReferredUsers.classList.remove('hidden'); // Показываем, если нет приглашенных
+                        noReferredUsers.classList.remove('hidden');
                     } else {
                         querySnapshot.forEach((doc) => {
                             const listItem = document.createElement('li');
-                            listItem.textContent = `ID друга: ${doc.id}`; // Можете добавить больше информации, если храните
+                            listItem.textContent = `ID друга: ${doc.id}`;
                             referredUsersList.appendChild(listItem);
                         });
                     }
@@ -1075,7 +1031,6 @@
                         const newScore = parseFloat((currentScore + REFERRER_BONUS).toFixed(2));
                         const referredUsers = currentData.referredUsers || [];
 
-                        // Проверяем, чтобы не начислять бонус дважды за одного и того же приглашенного
                         if (!referredUsers.includes(newUserId)) {
                             referredUsers.push(newUserId);
                             transaction.update(referrerDocRef, {
@@ -1095,7 +1050,6 @@
             }
         }
 
-        // --- Логика задания "Вступи в группу" ---
         async function updateGroupTaskStatus() {
             if (!claimGroupTaskRewardButton || !groupTaskStatus) return;
 
@@ -1138,7 +1092,7 @@
                         }
                         const currentData = docSnap.data();
                         const currentScore = parseFloat(currentData.score || 0);
-                        const newScore = parseFloat((currentScore + 10).toFixed(2)); // Награда 10 TapCoins
+                        const newScore = parseFloat((currentScore + 10).toFixed(2));
 
                         const updatedCompletedTasks = { ...currentData.completedTasks, 'telegramGroupJoin': true };
 
@@ -1164,7 +1118,6 @@
             });
         }
 
-        // --- Логика задания "Ежедневный бонус" ---
         async function updateDailyBonusTaskStatus() {
             if (!claimDailyBonusButton || !dailyBonusStatus) return;
 
@@ -1238,12 +1191,10 @@
             });
         }
 
-
-        // --- Логика скинов монетки ---
         function renderCoinSkins() {
             if (!coinSkinSelector) return;
 
-            coinSkinSelector.innerHTML = ''; // Очищаем текущие кнопки
+            coinSkinSelector.innerHTML = '';
             availableCoinSkins.forEach(skin => {
                 const button = document.createElement('button');
                 button.classList.add('coin-skin-button');
@@ -1255,25 +1206,18 @@
                 }
 
                 button.addEventListener('click', async () => {
-                    if (currentCoinSkin === skin) return; // Уже выбран
+                    if (currentCoinSkin === skin) return;
 
                     currentCoinSkin = skin;
                     updateDisplays();
-                    await saveGameData(); // Сохраняем новый скин
-                    renderCoinSkins(); // Перерисовываем для обновления активного состояния
+                    await saveGameData();
+                    renderCoinSkins();
                 });
                 coinSkinSelector.appendChild(button);
             });
         }
 
-        // Вызываем рендер скинов при загрузке страницы, чтобы они отображались
-        // renderCoinSkins() будет вызван в loadGameData()
-        // а также при переключении на страницу магазина
-
-        // Инициализация Firebase при загрузке DOM
         document.addEventListener('DOMContentLoaded', initializeFirebase);
-        // showPage('mainPage'); // Показываем главную страницу по умолчанию, это будет вызвано после loadGameData
-
     </script>
 </body>
 </html>
