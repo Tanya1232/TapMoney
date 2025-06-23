@@ -53,7 +53,7 @@
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            padding-bottom: 140px; /* Space for the fixed two-row navbar */
+            padding-bottom: 200px; /* Увеличено, чтобы избежать перекрытия нижней навигационной панелью */
             /* Убраны opacity и transition для мгновенного переключения */
         }
         .page-content.active {
@@ -1004,6 +1004,7 @@
 
         // --- Логика ежедневного бонуса ---
         function isToday(timestamp) {
+            if (!timestamp) return false;
             const date = new Date(timestamp);
             const today = new Date();
             return date.getDate() === today.getDate() &&
@@ -1314,7 +1315,7 @@
 
                         const upgradeTimerInterval = setInterval(async () => { 
                             timeLeft--;
-                            if (upgradeTimerDisplay) upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                            if (upgradeTimerDisplay) upgradeTimerDisplay.textContent = `До награды: ${timeLeft} sec`;
 
                             if (timeLeft <= 0) {
                                 clearInterval(upgradeTimerInterval);
