@@ -47,13 +47,15 @@
             display: none; /* Hidden by default */
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Изменено на flex-start, чтобы контент начинался сверху */
             flex-grow: 1; /* Takes available space */
             width: 100%;
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            padding-bottom: 200px; /* Увеличено, чтобы избежать перекрытия нижней навигационной панелью */
+            padding-bottom: 220px; /* Увеличено, чтобы избежать перекрытия нижней навигационной панелью */
+            overflow-y: auto; /* Добавлена вертикальная прокрутка, если контент не помещается */
+            height: 100vh; /* Задает высоту для правильной работы overflow */
             /* Убраны opacity и transition для мгновенного переключения */
         }
         .page-content.active {
@@ -193,6 +195,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             max-width: 90%;
             width: 100%;
+            margin-bottom: 8px; /* mb-2 converted to 8px */
         }
         .sub-heading {
             font-size: 1.2rem;
@@ -200,7 +203,7 @@
             margin-top: 15px;
         }
         .sub-text {
-            font-size: 1rem;
+            font-size: 0.9rem; /* Уменьшен размер шрифта */
             color: #cbd5e0;
             margin-bottom: 10px;
         }
@@ -317,7 +320,7 @@
     <!-- Tasks Page Content (Задания) -->
     <div id="tasksPage" class="page-content">
         <h2 class="text-3xl font-bold text-purple-300 game-font">Задания</h2>
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Вступи в группу Telegram</h3>
             <p class="sub-text">Получи 10 TapCoins за вступление в наше официальное сообщество!</p>
             <a href="https://t.me/TapMoneyOfficial" target="_blank" class="upgrade-button" style="background-color: #007bff; margin-bottom: 15px;">Перейти в группу</a>
@@ -325,14 +328,14 @@
             <p id="groupTaskStatus" class="sub-text mt-2"></p>
         </div>
 
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Ежедневный Бонус</h3>
             <p class="sub-text">Ежедневно предоставляет 1 TapCoin в качестве бонуса при входе в игру.</p>
             <button id="claimDailyBonusButton" class="upgrade-button">Забрать бонус</button>
             <p id="dailyBonusStatus" class="sub-text mt-2"></p>
         </div>
         
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Другие задания</h3>
             <p class="sub-text">Больше ежедневных и еженедельных заданий скоро появятся здесь!</p>
         </div>
@@ -369,21 +372,21 @@
     <!-- Improvements Page Content (Улучшения) -->
     <div id="improvementsPage" class="page-content">
         <h2 class="text-3xl font-bold text-green-300 game-font">Улучшения</h2>
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <p class="upgrade-info-text">Улучшить клик на 0.10</p> <!-- Изменено: убрано "за рекламу" -->
             <button id="upgradeClickButton" class="upgrade-button">Улучшить клик</button>
             <p id="upgradeTimerDisplay" class="timer-text hidden"></p>
             <p id="upgradeLoadingText" class="loading-text"></p>
         </div>
 
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <p class="upgrade-info-text">Пассивный доход: <span id="passiveIncomeRateDisplayImp">0.000</span> TapCoins/час</p>
             <button id="upgradePassiveIncomeButton" class="upgrade-button">Улучшить пассивный доход</button> <!-- Изменено: убрано "(Реклама)" -->
             <p id="passiveIncomeTimerDisplay" class="timer-text hidden"></p>
             <p id="passiveIncomeLoadingText" class="loading-text"></p>
         </div>
 
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Авто-Сборщик</h3>
             <p class="sub-text">Автоматически собирает накопленный пассивный доход каждые 2 часа.</p>
             <p id="autoCollectorCostDisplay" class="sub-text">Стоимость: 500 TapCoins.</p>
@@ -395,17 +398,17 @@
     <!-- Games Page Content (Игры) -->
     <div id="gamesPage" class="page-content">
         <h2 class="text-3xl font-bold text-indigo-300 game-font">Игры</h2>
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Змейка</h3>
             <p class="sub-text">Классическая игра "Змейка".</p>
             <p class="sub-text text-yellow-400">В разработке...</p>
         </div>
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Камень, ножницы, бумага</h3>
             <p class="sub-text">Проверь свою удачу в этой игре.</p>
             <p class="sub-text text-yellow-400">В разработке...</p>
         </div>
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Колесо фортуны</h3>
             <p class="sub-text">Вращай колесо и выигрывай TapCoins!</p>
             <p class="sub-text text-yellow-400">В разработке...</p>
@@ -437,11 +440,11 @@
     <!-- Withdraw Page Content (Вывод) -->
     <div id="withdrawPage" class="page-content">
         <h2 class="text-3xl font-bold text-pink-300 game-font">Вывод</h2>
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Вывод на Payeer</h3>
             <p class="sub-text text-yellow-400">В разработке...</p>
         </div>
-        <div class="generic-page-content flex flex-col items-center mb-4">
+        <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Вывод на LTC (Litecoin)</h3>
             <p class="sub-text text-yellow-400">В разработке...</p>
         </div>
@@ -1288,7 +1291,7 @@
 
                         const timerInterval = setInterval(async () => { 
                             timeLeft--;
-                            if (timerDisplay) timerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                            if (timerDisplay) timerDisplay.textContent = `До награды: ${timeLeft} sec`;
 
                             if (timeLeft <= 0) {
                                 clearInterval(timerInterval); 
