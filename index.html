@@ -13,8 +13,8 @@
         body {
             font-family: 'Inter', sans-serif; /* Fallback font */
             background-color: #1a202c; /* Fallback solid dark background */
-            /* Обновленная ссылка на фоновое изображение */
-            background-image: url('https://github.com/Tanya1232/TapMoney/blob/main/Flux_Dev_Vibrant_cartoon_cityscape_panoramic_view_with_buildin_1.jpg?raw=true'); 
+            /* Обновленная ссылка на фоновое изображение - УДАЛЕНО */
+            /* background-image: url('https://github.com/Tanya1232/TapMoney/blob/main/Flux_Dev_Vibrant_cartoon_cityscape_panoramic_view_with_buildin_1.jpg?raw=true'); */ 
             background-size: cover; /* Cover the entire screen */
             background-position: center; /* Center the image */
             background-repeat: no-repeat; /* Do not repeat the image */
@@ -79,7 +79,6 @@
             width: 100%;
         }
         .click-button {
-            /* Убран background-color, так как фон будет изображением */
             border: 5px solid #3b82f6; /* Blue border to define circle */
             width: 180px; /* Fixed width for round shape */
             height: 180px; /* Fixed height for round shape */
@@ -118,7 +117,6 @@
             transform: none;
         }
         /* Стиль для изображения внутри кнопки - удален, так как изображение теперь фон */
-        /* .click-button img { ... } */ 
         .timer-text {
             font-size: 1.2rem; /* Smaller timer text */
             color: #f6ad55; /* Orange for timer */
@@ -1096,13 +1094,13 @@
                     console.log("Upgrade passive income button clicked.");
                     showMonetagAd(async () => { 
                         let timeLeft = adTimerDuration;
-                        if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                        if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} sec`;
                         if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.remove('hidden');
                         if (passiveIncomeLoadingText) passiveIncomeLoadingText.textContent = "";
 
                         const passiveTimerInterval = setInterval(async () => { 
                             timeLeft--;
-                            if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
+                            if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.textContent = `До награды: ${timeLeft} sec`;
 
                             if (timeLeft <= 0) {
                                 clearInterval(passiveTimerInterval);
