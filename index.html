@@ -326,6 +326,13 @@
         </div>
 
         <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Ежедневный Бонус</h3>
+            <p class="sub-text">Ежедневно предоставляет 1 TapCoin в качестве бонуса при входе в игру.</p>
+            <button id="claimDailyBonusButton" class="upgrade-button">Забрать бонус</button>
+            <p id="dailyBonusStatus" class="sub-text mt-2"></p>
+        </div>
+        
+        <div class="generic-page-content flex flex-col items-center mb-4">
             <h3 class="sub-heading">Другие задания</h3>
             <p class="sub-text">Больше ежедневных и еженедельных заданий скоро появятся здесь!</p>
         </div>
@@ -369,11 +376,19 @@
             <p id="upgradeLoadingText" class="loading-text"></p>
         </div>
 
-        <div class="generic-page-content flex flex-col items-center">
+        <div class="generic-page-content flex flex-col items-center mb-4">
             <p class="upgrade-info-text">Пассивный доход: <span id="passiveIncomeRateDisplayImp">0.000</span> TapCoins/час</p>
             <button id="upgradePassiveIncomeButton" class="upgrade-button">Улучшить пассивный доход</button> <!-- Изменено: убрано "(Реклама)" -->
             <p id="passiveIncomeTimerDisplay" class="timer-text hidden"></p>
             <p id="passiveIncomeLoadingText" class="loading-text"></p>
+        </div>
+
+        <div class="generic-page-content flex flex-col items-center mb-4">
+            <h3 class="sub-heading">Авто-Сборщик</h3>
+            <p class="sub-text">Автоматически собирает накопленный пассивный доход каждые 2 часа.</p>
+            <p id="autoCollectorCostDisplay" class="sub-text">Стоимость: 500 TapCoins.</p>
+            <button id="buyAutoCollectorButton" class="upgrade-button">Купить Авто-Сборщик</button>
+            <p id="autoCollectorStatus" class="sub-text mt-2"></p>
         </div>
     </div>
 
@@ -554,6 +569,14 @@
         let claimGroupTaskRewardButton;
         let groupTaskStatus;
 
+        // Новые элементы для ежедневного бонуса и авто-сборщика
+        let claimDailyBonusButton;
+        let dailyBonusStatus;
+        let buyAutoCollectorButton;
+        let autoCollectorStatus;
+        let autoCollectorCostDisplay;
+
+
         // Игровые данные
         let score = 0;
         let tapCoinsPerAd = 1.00; // Начальное значение монет за рекламу
@@ -565,6 +588,13 @@
         const NEW_USER_BONUS = 10; // Бонус для нового пользователя, пришедшего по реферальной ссылке
         const REFERRER_BONUS = 25; // Бонус для реферера за каждого приглашенного
         let completedTasks = {}; // Объект для хранения выполненных заданий: { 'taskId': true }
+        
+        // Новые игровые данные для ежедневного бонуса и авто-сборщика
+        let lastDailyBonusClaimDate = null; // Дата последнего получения ежедневного бонуса
+        let hasAutoCollector = false; // Куплен ли авто-сборщик
+        const AUTO_COLLECTOR_COST = 500; // Стоимость авто-сборщика
+        const DAILY_BONUS_AMOUNT = 1; // Количество TapCoins за ежедневный бонус
+        const AUTO_COLLECT_INTERVAL_HOURS = 2; // Интервал авто-сбора в часах
 
 
         // --- Управление вкладками/страницами ---
@@ -605,6 +635,8 @@
             if (referralStatus) referralStatus.classList.add('hidden');
             // Скрыть статус задания
             if (groupTaskStatus) groupTaskStatus.textContent = "";
+            if (dailyBonusStatus) dailyBonusStatus.textContent = "";
+            if (autoCollectorStatus) autoCollectorStatus.textContent = "";
 
 
             // Специфическая логика в зависимости от отображаемой страницы
@@ -626,6 +658,7 @@
                 if (passiveIncomeRateDisplayImp) {
                     passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
                 }
+                updateAutoCollectorDisplay(); // Обновление для авто-сборщика
             } else if (pageId === 'aboutPage') {
                 if (aboutSubNavButtons.length > 0) showAboutSubPage('newsSubPage'); 
             } else if (pageId === 'friendsPage') {
@@ -635,6 +668,7 @@
                 if (shopSubNavButtons.length > 0) showShopSubPage('shopItemsSubPage');
             } else if (pageId === 'tasksPage') {
                 updateGroupTaskStatus();
+                updateDailyBonusDisplay(); // Обновление для ежедневного бонуса
             }
             currentPageId = pageId; 
         }
@@ -691,8 +725,12 @@
             if (referralIdDisplay) referralIdDisplay.textContent = userId; 
             if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
 
+            // Обновление специфических элементов для текущей страницы
             if (currentPageId === 'tasksPage') {
                 updateGroupTaskStatus();
+                updateDailyBonusDisplay();
+            } else if (currentPageId === 'improvementsPage') {
+                updateAutoCollectorDisplay();
             }
         }
 
@@ -707,12 +745,13 @@
                 const dataToSave = {
                     score: score,
                     tapCoinsPerAd: tapCoinsPerAd,
-                    // capturedAds: capturedAds, // Добавлено сохранение capturedAds - удалено, т.к. переменная не объявлена
                     passiveIncomeRate: passiveIncomeRate,
                     lastLoginTimestamp: lastLoginTimestamp,
                     accumulatedPassiveIncome: accumulatedPassiveIncome, 
                     invitedBy: invitedBy, 
-                    completedTasks: completedTasks 
+                    completedTasks: completedTasks,
+                    lastDailyBonusClaimDate: lastDailyBonusClaimDate, // Сохраняем дату ежедневного бонуса
+                    hasAutoCollector: hasAutoCollector // Сохраняем статус авто-сборщика
                 };
                 await setDoc(userDocRef, dataToSave, { merge: true }); 
                 console.log("saveGameData: Игровые данные сохранены в Firestore:", dataToSave);
@@ -743,24 +782,26 @@
                     const data = docSnap.data();
                     score = parseFloat(data.score || 0);
                     tapCoinsPerAd = parseFloat(data.tapCoinsPerAd || 1.00);
-                    // capturedAds = parseInt(data.capturedAds || 0); // Добавлена загрузка capturedAds - удалено
                     passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
                     lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
                     accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
                     invitedBy = data.invitedBy || null; 
                     completedTasks = data.completedTasks || {}; 
+                    lastDailyBonusClaimDate = data.lastDailyBonusClaimDate || null; // Загружаем дату ежедневного бонуса
+                    hasAutoCollector = data.hasAutoCollector || false; // Загружаем статус авто-сборщика
                     console.log("loadGameData: Игровые данные загружены из Firestore:", data);
                 } else {
                     console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
                     isNewUser = true;
                     score = 0;
                     tapCoinsPerAd = 1.00;
-                    // capturedAds = 0; // Инициализация capturedAds для нового пользователя - удалено
                     passiveIncomeRate = 0.000;
                     lastLoginTimestamp = Date.now();
                     accumulatedPassiveIncome = 0;
                     invitedBy = null; 
                     completedTasks = {}; 
+                    lastDailyBonusClaimDate = null;
+                    hasAutoCollector = false;
                 }
 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -782,13 +823,26 @@
                 console.log(`loadGameData Debug: elapsedTimeMs: ${elapsedTimeMs}, elapsedTimeHours: ${elapsedTimeHours.toFixed(4)}`);
                 console.log(`loadGameData Debug: passiveIncomeRate: ${passiveIncomeRate.toFixed(3)}, initial accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
 
-
-                if (passiveIncomeRate > 0 && elapsedTimeHours > 0) {
+                // Логика автоматического сбора пассивного дохода
+                if (hasAutoCollector && passiveIncomeRate > 0) {
+                    const collectIntervalMs = AUTO_COLLECT_INTERVAL_HOURS * 60 * 60 * 1000; // 2 часа в миллисекундах
+                    let timeSinceLastCollect = currentTime - lastLoginTimestamp; // Используем lastLoginTimestamp как точку отсчета
+                    
+                    if (timeSinceLastCollect >= collectIntervalMs) {
+                        const numberOfCollections = Math.floor(timeSinceLastCollect / collectIntervalMs);
+                        const collectedAmount = passiveIncomeRate * AUTO_COLLECT_INTERVAL_HOURS * numberOfCollections;
+                        score = parseFloat((score + collectedAmount).toFixed(2));
+                        accumulatedPassiveIncome = 0; // Сбрасываем, так как авто-сборщик все собрал
+                        lastLoginTimestamp = currentTime - (timeSinceLastCollect % collectIntervalMs); // Смещаем на остаток
+                        console.log(`Авто-сборщик собрал ${collectedAmount.toFixed(2)} TapCoins.`);
+                    }
+                } else if (passiveIncomeRate > 0 && elapsedTimeHours > 0) { // Обычный расчет пассивного дохода, если нет авто-сборщика
                     const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
                     accumulatedPassiveIncome = accumulatedPassiveIncome + newlyAccumulated; 
                     console.log(`loadGameData Debug: newlyAccumulated: ${newlyAccumulated.toFixed(4)}, final accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
                 }
-                lastLoginTimestamp = currentTime; 
+                lastLoginTimestamp = currentTime; // Обновляем lastLoginTimestamp после всех расчетов
+
 
                 await saveGameData(); 
 
@@ -948,6 +1002,188 @@
             }
         }
 
+        // --- Логика ежедневного бонуса ---
+        function isToday(timestamp) {
+            const date = new Date(timestamp);
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                   date.getMonth() === today.getMonth() &&
+                   date.getFullYear() === today.getFullYear();
+        }
+
+        async function updateDailyBonusDisplay() {
+            if (!claimDailyBonusButton || !dailyBonusStatus) return;
+
+            if (lastDailyBonusClaimDate && isToday(lastDailyBonusClaimDate)) {
+                claimDailyBonusButton.disabled = true;
+                dailyBonusStatus.textContent = `Ежедневный бонус (${DAILY_BONUS_AMOUNT} TapCoin) уже получен сегодня.`;
+                dailyBonusStatus.style.color = '#f6ad55'; // Orange
+            } else {
+                claimDailyBonusButton.disabled = false;
+                dailyBonusStatus.textContent = `Заберите свой ежедневный бонус (${DAILY_BONUS_AMOUNT} TapCoin)!`;
+                dailyBonusStatus.style.color = '#68d391'; // Green
+            }
+        }
+
+        async function claimDailyBonus() {
+            if (!db || !userId || !isAuthReady) {
+                if (dailyBonusStatus) {
+                    dailyBonusStatus.textContent = "Ошибка: база данных не готова.";
+                    dailyBonusStatus.style.color = '#fc8181'; 
+                }
+                console.error("claimDailyBonus: Firestore или userId не инициализированы или аутентификация не готова.");
+                return;
+            }
+
+            if (lastDailyBonusClaimDate && isToday(lastDailyBonusClaimDate)) {
+                if (dailyBonusStatus) {
+                    dailyBonusStatus.textContent = "Вы уже получили ежедневный бонус сегодня.";
+                    dailyBonusStatus.style.color = '#f6ad55'; 
+                }
+                return;
+            }
+
+            if (claimDailyBonusButton) claimDailyBonusButton.disabled = true;
+            if (dailyBonusStatus) {
+                dailyBonusStatus.textContent = "Начисление бонуса...";
+                dailyBonusStatus.style.color = '#63b3ed'; 
+            }
+
+            try {
+                const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                
+                await runTransaction(db, async (transaction) => {
+                    const docSnap = await transaction.get(userDocRef);
+                    if (!docSnap.exists()) {
+                        throw new Error("Документ пользователя не найден.");
+                    }
+                    const currentData = docSnap.data();
+                    const currentScore = parseFloat(currentData.score || 0);
+                    const newScoreForTransaction = parseFloat((currentScore + DAILY_BONUS_AMOUNT).toFixed(2));
+                    const currentTimestamp = Date.now();
+
+                    transaction.update(userDocRef, { 
+                        score: newScoreForTransaction,
+                        lastDailyBonusClaimDate: currentTimestamp
+                    });
+                }); // End of runTransaction
+
+                lastDailyBonusClaimDate = Date.now(); // Обновляем локально
+                score = parseFloat((score + DAILY_BONUS_AMOUNT).toFixed(2)); // Обновляем локально
+                updateDisplays(); 
+                updateDailyBonusDisplay(); 
+                console.log(`Ежедневный бонус ${DAILY_BONUS_AMOUNT} TapCoin начислен.`);
+
+            } catch (error) {
+                console.error("Ошибка при получении ежедневного бонуса:", error);
+                if (dailyBonusStatus) {
+                    dailyBonusStatus.textContent = `Ошибка: ${error.message}. Попробуйте позже.`;
+                    dailyBonusStatus.style.color = '#fc8181'; 
+                }
+                if (claimDailyBonusButton) claimDailyBonusButton.disabled = false; 
+            }
+        }
+
+        // --- Логика авто-сборщика ---
+        async function updateAutoCollectorDisplay() {
+            if (!buyAutoCollectorButton || !autoCollectorStatus || !autoCollectorCostDisplay) return;
+
+            if (hasAutoCollector) {
+                buyAutoCollectorButton.style.display = 'none'; // Скрываем кнопку покупки
+                autoCollectorCostDisplay.style.display = 'none'; // Скрываем стоимость
+                autoCollectorStatus.textContent = "Авто-Сборщик: Активен!";
+                autoCollectorStatus.style.color = '#68d391'; // Green
+            } else {
+                buyAutoCollectorButton.style.display = 'block'; // Показываем кнопку покупки
+                autoCollectorCostDisplay.style.display = 'block'; // Показываем стоимость
+                autoCollectorCostDisplay.textContent = `Стоимость: ${AUTO_COLLECTOR_COST} TapCoins.`;
+                autoCollectorStatus.textContent = "Авто-Сборщик: Не куплен.";
+                autoCollectorStatus.style.color = '#cbd5e0'; // Light text
+
+                // Проверяем, достаточно ли денег для покупки
+                if (score < AUTO_COLLECTOR_COST) {
+                    buyAutoCollectorButton.disabled = true;
+                    autoCollectorStatus.textContent = `Недостаточно TapCoins для покупки. Нужно ${AUTO_COLLECTOR_COST}.`;
+                    autoCollectorStatus.style.color = '#fc8181'; // Red
+                } else {
+                    buyAutoCollectorButton.disabled = false;
+                }
+            }
+        }
+
+        async function buyAutoCollector() {
+            if (!db || !userId || !isAuthReady) {
+                if (autoCollectorStatus) {
+                    autoCollectorStatus.textContent = "Ошибка: база данных не готова.";
+                    autoCollectorStatus.style.color = '#fc8181'; 
+                }
+                console.error("buyAutoCollector: Firestore или userId не инициализированы или аутентификация не готова.");
+                return;
+            }
+
+            if (hasAutoCollector) {
+                if (autoCollectorStatus) {
+                    autoCollectorStatus.textContent = "Авто-Сборщик уже куплен.";
+                    autoCollectorStatus.style.color = '#f6ad55'; 
+                }
+                return;
+            }
+
+            if (score < AUTO_COLLECTOR_COST) {
+                if (autoCollectorStatus) {
+                    autoCollectorStatus.textContent = `Недостаточно TapCoins для покупки. Нужно ${AUTO_COLLECTOR_COST}.`;
+                    autoCollectorStatus.style.color = '#fc8181'; 
+                }
+                return;
+            }
+
+            if (buyAutoCollectorButton) buyAutoCollectorButton.disabled = true;
+            if (autoCollectorStatus) {
+                autoCollectorStatus.textContent = "Покупка Авто-Сборщика...";
+                autoCollectorStatus.style.color = '#63b3ed'; 
+            }
+
+            try {
+                const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
+                
+                await runTransaction(db, async (transaction) => {
+                    const docSnap = await transaction.get(userDocRef);
+                    if (!docSnap.exists()) {
+                        throw new Error("Документ пользователя не найден.");
+                    }
+                    const currentData = docSnap.data();
+                    const currentScore = parseFloat(currentData.score || 0);
+
+                    if (currentScore < AUTO_COLLECTOR_COST) {
+                        throw new Error("Недостаточно средств для покупки Авто-Сборщика.");
+                    }
+
+                    const newScoreForTransaction = parseFloat((currentScore - AUTO_COLLECTOR_COST).toFixed(2));
+                    
+                    transaction.update(userDocRef, { 
+                        score: newScoreForTransaction,
+                        hasAutoCollector: true
+                    });
+                }); // End of runTransaction
+
+                score = parseFloat((score - AUTO_COLLECTOR_COST).toFixed(2)); // Обновляем локально
+                hasAutoCollector = true; // Обновляем локально
+
+                updateDisplays(); 
+                updateAutoCollectorDisplay(); 
+                console.log(`Авто-Сборщик куплен за ${AUTO_COLLECTOR_COST} TapCoins.`);
+
+            } catch (error) {
+                console.error("Ошибка при покупке Авто-Сборщика:", error);
+                if (autoCollectorStatus) {
+                    autoCollectorStatus.textContent = `Ошибка: ${error.message}. Попробуйте позже.`;
+                    autoCollectorStatus.style.color = '#fc8181'; 
+                }
+                if (buyAutoCollectorButton) buyAutoCollectorButton.disabled = false; 
+            }
+        }
+
+
         // Функция для вызова рекламного блока Monetag
         function showMonetagAd(callback, targetLoadingText, targetTimerDisplay, targetButton) {
             if (targetButton) targetButton.disabled = true;
@@ -1006,6 +1242,14 @@
 
             claimGroupTaskRewardButton = document.getElementById('claimGroupTaskRewardButton');
             groupTaskStatus = document.getElementById('groupTaskStatus');
+
+            // Получение ссылок на новые элементы
+            claimDailyBonusButton = document.getElementById('claimDailyBonusButton');
+            dailyBonusStatus = document.getElementById('dailyBonusStatus');
+            buyAutoCollectorButton = document.getElementById('buyAutoCollectorButton');
+            autoCollectorStatus = document.getElementById('autoCollectorStatus');
+            autoCollectorCostDisplay = document.getElementById('autoCollectorCostDisplay');
+
 
             navButtons = document.querySelectorAll('.nav-button');
             pages = document.querySelectorAll('.page-content');
@@ -1222,6 +1466,17 @@
                     }
                 });
             }
+
+            // Обработчик для ежедневного бонуса
+            if (claimDailyBonusButton) {
+                claimDailyBonusButton.addEventListener('click', claimDailyBonus);
+            }
+
+            // Обработчик для покупки авто-сборщика
+            if (buyAutoCollectorButton) {
+                buyAutoCollectorButton.addEventListener('click', buyAutoCollector);
+            }
+
 
             // Инициализация Telegram Web App
             if (window.Telegram && window.Telegram.WebApp) {
