@@ -458,7 +458,10 @@
             <span class="sub-text">Русский</span>
             <br><br>
             <span class="sub-heading">Звук</span><br>
-            <span class="sub-text">Вкл/Выкл</span>
+            <div class="flex items-center justify-center mt-2">
+                <label for="soundToggle" class="sub-text mr-3">Включить звук:</label>
+                <input type="checkbox" id="soundToggle" class="form-checkbox h-5 w-5 text-blue-600 rounded" checked>
+            </div>
         </p>
     </div>
 
@@ -579,6 +582,22 @@
         let autoCollectorStatus;
         let autoCollectorCostDisplay;
 
+        // Глобальные переменные для аудио
+        let audioContext;
+        let backgroundSource = null; // AudioBufferSourceNode для MP3
+        let backgroundGainNode = null;
+        let backgroundAudioBuffer = null; // Для хранения декодированных аудиоданных
+        let isMusicPlaying = false;
+        let isMuted = false; 
+
+        // Константы для аудио
+        // Обновленная ссылка на музыку
+        const backgroundMusicUrl = './happy-day-1-20240418-det.mp3';
+        const clickSoundFrequency = 880; 
+        const clickSoundDuration = 0.1; 
+
+        // Элемент для переключателя звука в настройках
+        let soundToggleInput;
 
         // Игровые данные
         let score = 0;
@@ -605,11 +624,138 @@
         let pages; // Объявляем, но получаем ссылку в DOMContentLoaded
         let currentPageId = 'mainPage'; // Текущая активная страница
 
-        // *** Все функции перемещены в начало для обеспечения их доступности перед вызовом ***
+        // --- Аудио функции ---
+        // Функция для загрузки и декодирования аудио файла
+        async function loadBackgroundMusic() {
+            if (backgroundAudioBuffer) {
+                return backgroundAudioBuffer; // Уже загружено
+            }
+            try {
+                const response = await fetch(backgroundMusicUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                // Инициализация AudioContext здесь, если он еще не создан
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                backgroundAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                console.log("Background music loaded and decoded.");
+                return backgroundAudioBuffer;
+            } catch (error) {
+                console.error("Error loading or decoding background music:", error);
+                // Отключим музыку, если возникла ошибка загрузки
+                isMuted = true;
+                updateSoundToggleDisplay();
+                return null;
+            }
+        }
+
+        // Функция для воспроизведения фоновой музыки
+        async function startBackgroundMusic() {
+            if (isMuted) {
+                console.log("Музыка заглушена, не запускаем фоновую музыку.");
+                return;
+            }
+            // Предотвращаем запуск нескольких экземпляров
+            if (isMusicPlaying && backgroundSource && audioContext && backgroundSource.buffer) {
+                 console.log("Музыка уже играет, повторный запуск отменен.");
+                 return;
+            }
+            
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            try {
+                if (!backgroundAudioBuffer) {
+                    await loadBackgroundMusic();
+                    if (!backgroundAudioBuffer) {
+                        console.error("Не удалось загрузить буфер фоновой музыки, невозможно запустить.");
+                        return;
+                    }
+                }
+
+                // Необходимо создать новый AudioBufferSourceNode каждый раз, когда мы хотим запустить воспроизведение
+                // (предыдущий backgroundSource.stop() делает его непригодным для повторного использования)
+                backgroundSource = audioContext.createBufferSource();
+                backgroundSource.buffer = backgroundAudioBuffer;
+                backgroundSource.loop = true; // Зацикливаем музыку
+
+                if (!backgroundGainNode) {
+                    backgroundGainNode = audioContext.createGain();
+                    backgroundGainNode.connect(audioContext.destination);
+                }
+                backgroundGainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Установим начальную громкость
+                
+                backgroundSource.connect(backgroundGainNode);
+                backgroundSource.start(0); // Воспроизведение немедленно
+                isMusicPlaying = true;
+                console.log("Фоновая музыка запущена.");
+
+            } catch (error) {
+                console.error("Ошибка при запуске фоновой музыки:", error);
+                isMuted = true; // Заглушим, если не удалось запустить
+                updateSoundToggleDisplay();
+            }
+        }
+
+        // Функция для остановки фоновой музыки
+        function stopBackgroundMusic() {
+            if (backgroundSource) {
+                backgroundSource.stop();
+                backgroundSource.disconnect();
+                backgroundSource = null; // Обнуляем источник, чтобы при следующем запуске создавался новый
+                isMusicPlaying = false;
+                console.log("Фоновая музыка остановлена.");
+            }
+        }
+
+        // Функция для воспроизведения звука клика
+        function playClickSound() {
+            if (isMuted) return; // Не воспроизводим, если звук выключен
+
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = 'square'; // Квадратная волна для более резкого "клика"
+            oscillator.frequency.setValueAtTime(clickSoundFrequency, audioContext.currentTime); 
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Громкость для клика
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + clickSoundDuration); // Быстрое затухание
+            oscillator.stop(audioContext.currentTime + clickSoundDuration); // Останавливаем через clickSoundDuration
+        }
+
+        // Функция для переключения состояния звука (музыка и эффекты)
+        function toggleSound() {
+            isMuted = !isMuted;
+            if (isMuted) {
+                stopBackgroundMusic();
+            } else {
+                startBackgroundMusic(); // Запустит загрузку и воспроизведение, если еще не запущено
+            }
+            updateSoundToggleDisplay(); // Обновляем чекбокс в настройках
+            saveGameData(); // Сохраняем новое состояние звука
+            console.log("Состояние звука изменено на:", isMuted ? "выключено" : "включено");
+        }
+
+        // Функция для обновления состояния чекбокса звука в настройках
+        function updateSoundToggleDisplay() {
+            if (soundToggleInput) {
+                soundToggleInput.checked = !isMuted;
+            }
+        }
+
+        // --- Основные функции игры (далее идут функции, которые были до изменений) ---
 
         // Функция для отображения конкретной страницы и скрытия остальных
         function showPage(pageId) {
-            // Убраны CSS переходы и задержки для мгновенного переключения
             pages.forEach(page => {
                 if (page.id === pageId) {
                     page.classList.add('active');
@@ -618,7 +764,6 @@
                 }
             });
 
-            // Обновление активного состояния кнопок навигации (это может происходить немедленно)
             navButtons.forEach(button => {
                 if (button.dataset.page + 'Page' === pageId) {
                     button.classList.add('active');
@@ -627,22 +772,18 @@
                 }
             });
 
-            // Сброс сообщений о загрузке и таймеров при переключении страниц
             if (loadingText) loadingText.textContent = ""; 
             if (timerDisplay) timerDisplay.classList.add('hidden');
             if (upgradeLoadingText) upgradeLoadingText.textContent = "";
             if (upgradeTimerDisplay) upgradeTimerDisplay.classList.add('hidden');
             if (passiveIncomeLoadingText) passiveIncomeLoadingText.textContent = "";
             if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
-            // Скрыть сообщение о копировании ссылки
             if (referralStatus) referralStatus.classList.add('hidden');
-            // Скрыть статус задания
             if (groupTaskStatus) groupTaskStatus.textContent = "";
             if (dailyBonusStatus) dailyBonusStatus.textContent = "";
             if (autoCollectorStatus) autoCollectorStatus.textContent = "";
 
 
-            // Специфическая логика в зависимости от отображаемой страницы
             if (pageId === 'mainPage') {
                 if (clickButton) clickButton.disabled = true; 
                 if (loadingText) loadingText.textContent = "Загрузка данных..."; 
@@ -661,22 +802,22 @@
                 if (passiveIncomeRateDisplayImp) {
                     passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
                 }
-                updateAutoCollectorDisplay(); // Обновление для авто-сборщика
+                updateAutoCollectorDisplay(); 
             } else if (pageId === 'aboutPage') {
                 if (aboutSubNavButtons.length > 0) showAboutSubPage('newsSubPage'); 
             } else if (pageId === 'friendsPage') {
-                // Загрузить и отобразить информацию о реферальной программе
                 updateReferralDisplays(); 
             } else if (pageId === 'shopPage') {
                 if (shopSubNavButtons.length > 0) showShopSubPage('shopItemsSubPage');
             } else if (pageId === 'tasksPage') {
                 updateGroupTaskStatus();
-                updateDailyBonusDisplay(); // Обновление для ежедневного бонуса
+                updateDailyBonusDisplay(); 
+            } else if (pageId === 'settingsPage') { // Добавлено для страницы настроек
+                updateSoundToggleDisplay(); // Обновляем состояние чекбокса при переходе на страницу настроек
             }
             currentPageId = pageId; 
         }
 
-        // Функция для отображения конкретной подстраницы в "Об игре"
         function showAboutSubPage(subPageId) { 
             aboutSubPages.forEach(subPage => {
                 if (subPage.id === subPageId) {
@@ -694,7 +835,6 @@
             });
         }
 
-        // Функция для отображения конкретной подстраницы в "Магазине"
         function showShopSubPage(subPageId) { 
             shopSubPages.forEach(subPage => {
                 if (subPage.id === subPageId) {
@@ -712,7 +852,6 @@
             });
         }
 
-        // Функция для обновления всех соответствующих элементов интерфейса
         function updateDisplays() {
             if (scoreDisplay) scoreDisplay.textContent = score.toFixed(2);
             if (tapCoinsPerAdDisplay) tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
@@ -728,16 +867,16 @@
             if (referralIdDisplay) referralIdDisplay.textContent = userId; 
             if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
 
-            // Обновление специфических элементов для текущей страницы
             if (currentPageId === 'tasksPage') {
                 updateGroupTaskStatus();
                 updateDailyBonusDisplay();
             } else if (currentPageId === 'improvementsPage') {
                 updateAutoCollectorDisplay();
+            } else if (currentPageId === 'settingsPage') {
+                updateSoundToggleDisplay();
             }
         }
 
-        // Функция для сохранения всех игровых данных в Firestore
         async function saveGameData() {
             if (!db || !userId) {
                 console.error("saveGameData: Firestore или userId не инициализированы. Невозможно сохранить данные.");
@@ -753,8 +892,9 @@
                     accumulatedPassiveIncome: accumulatedPassiveIncome, 
                     invitedBy: invitedBy, 
                     completedTasks: completedTasks,
-                    lastDailyBonusClaimDate: lastDailyBonusClaimDate, // Сохраняем дату ежедневного бонуса
-                    hasAutoCollector: hasAutoCollector // Сохраняем статус авто-сборщика
+                    lastDailyBonusClaimDate: lastDailyBonusClaimDate, 
+                    hasAutoCollector: hasAutoCollector, 
+                    isMuted: isMuted // Сохраняем статус звука
                 };
                 await setDoc(userDocRef, dataToSave, { merge: true }); 
                 console.log("saveGameData: Игровые данные сохранены в Firestore:", dataToSave);
@@ -763,7 +903,6 @@
             }
         }
 
-        // Функция для загрузки всех игровых данных из Firestore
         async function loadGameData() {
             console.log("loadGameData: Начало загрузки игровых данных.");
             if (loadingText) loadingText.textContent = "Загрузка игровых данных...";
@@ -790,8 +929,9 @@
                     accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
                     invitedBy = data.invitedBy || null; 
                     completedTasks = data.completedTasks || {}; 
-                    lastDailyBonusClaimDate = data.lastDailyBonusClaimDate || null; // Загружаем дату ежедневного бонуса
-                    hasAutoCollector = data.hasAutoCollector || false; // Загружаем статус авто-сборщика
+                    lastDailyBonusClaimDate = data.lastDailyBonusClaimDate || null; 
+                    hasAutoCollector = data.hasAutoCollector || false; 
+                    isMuted = data.isMuted || false; // Загружаем статус звука
                     console.log("loadGameData: Игровые данные загружены из Firestore:", data);
                 } else {
                     console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
@@ -805,6 +945,7 @@
                     completedTasks = {}; 
                     lastDailyBonusClaimDate = null;
                     hasAutoCollector = false;
+                    isMuted = false;
                 }
 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -826,30 +967,35 @@
                 console.log(`loadGameData Debug: elapsedTimeMs: ${elapsedTimeMs}, elapsedTimeHours: ${elapsedTimeHours.toFixed(4)}`);
                 console.log(`loadGameData Debug: passiveIncomeRate: ${passiveIncomeRate.toFixed(3)}, initial accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
 
-                // Логика автоматического сбора пассивного дохода
                 if (hasAutoCollector && passiveIncomeRate > 0) {
-                    const collectIntervalMs = AUTO_COLLECT_INTERVAL_HOURS * 60 * 60 * 1000; // 2 часа в миллисекундах
-                    let timeSinceLastCollect = currentTime - lastLoginTimestamp; // Используем lastLoginTimestamp как точку отсчета
+                    const collectIntervalMs = AUTO_COLLECT_INTERVAL_HOURS * 60 * 60 * 1000; 
+                    let timeSinceLastCollect = currentTime - lastLoginTimestamp; 
                     
                     if (timeSinceLastCollect >= collectIntervalMs) {
                         const numberOfCollections = Math.floor(timeSinceLastCollect / collectIntervalMs);
                         const collectedAmount = passiveIncomeRate * AUTO_COLLECT_INTERVAL_HOURS * numberOfCollections;
                         score = parseFloat((score + collectedAmount).toFixed(2));
-                        accumulatedPassiveIncome = 0; // Сбрасываем, так как авто-сборщик все собрал
-                        lastLoginTimestamp = currentTime - (timeSinceLastCollect % collectIntervalMs); // Смещаем на остаток
+                        accumulatedPassiveIncome = 0; 
+                        lastLoginTimestamp = currentTime - (timeSinceLastCollect % collectIntervalMs); 
                         console.log(`Авто-сборщик собрал ${collectedAmount.toFixed(2)} TapCoins.`);
                     }
-                } else if (passiveIncomeRate > 0 && elapsedTimeHours > 0) { // Обычный расчет пассивного дохода, если нет авто-сборщика
+                } else if (passiveIncomeRate > 0 && elapsedTimeHours > 0) { 
                     const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
                     accumulatedPassiveIncome = accumulatedPassiveIncome + newlyAccumulated; 
                     console.log(`loadGameData Debug: newlyAccumulated: ${newlyAccumulated.toFixed(4)}, final accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
                 }
-                lastLoginTimestamp = currentTime; // Обновляем lastLoginTimestamp после всех расчетов
-
+                lastLoginTimestamp = currentTime; 
 
                 await saveGameData(); 
 
                 updateDisplays(); 
+                
+                // Если музыка не заглушена, пытаемся запустить ее
+                if (!isMuted && !isMusicPlaying) {
+                    startBackgroundMusic(); 
+                } else if (isMuted && backgroundSource) {
+                    stopBackgroundMusic(); // Остановим, если каким-то образом играет при isMuted
+                }
 
                 if (loadingText) loadingText.textContent = ""; 
                 if (clickButton) clickButton.disabled = false; 
@@ -862,7 +1008,6 @@
             }
         }
 
-        // Инициализация Firebase и загрузка данных
         const initializeFirebase = async () => { 
             if (loadingText) loadingText.textContent = "Инициализация Firebase..."; 
             console.log("initializeFirebase: Начинается инициализация Firebase.");
@@ -903,7 +1048,6 @@
             }
         }; 
 
-        // --- Логика реферальной программы ---
         async function awardReferralBonusToReferrer(referrerId, referredUserId) {
             if (!db || !referrerId || !referredUserId || referrerId === userId) {
                 console.warn("awardReferralBonusToReferrer: Неверные параметры или реферер - сам пользователь.");
@@ -978,16 +1122,12 @@
             }
         }
 
-        // Добавляем эту функцию, так как она вызывается в showPage
         async function updateReferralDisplays() {
             if (referralIdDisplay) referralIdDisplay.textContent = userId; 
             if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
             await updateReferredUsersList();
-            // updateDisplays() также вызывается, но для избежания лишних обновлений,
-            // сосредоточимся на специфичных для рефералов обновлениях здесь.
         }
 
-        // --- Логика задания "Вступить в группу" ---
         const JOIN_GROUP_TASK_ID = 'joinGroup';
         const JOIN_GROUP_REWARD = 10;
 
@@ -1005,7 +1145,6 @@
             }
         }
 
-        // --- Логика ежедневного бонуса ---
         function isToday(timestamp) {
             if (!timestamp) return false;
             const date = new Date(timestamp);
@@ -1021,11 +1160,11 @@
             if (lastDailyBonusClaimDate && isToday(lastDailyBonusClaimDate)) {
                 claimDailyBonusButton.disabled = true;
                 dailyBonusStatus.textContent = `Ежедневный бонус (${DAILY_BONUS_AMOUNT} TapCoin) уже получен сегодня.`;
-                dailyBonusStatus.style.color = '#f6ad55'; // Orange
+                dailyBonusStatus.style.color = '#f6ad55'; 
             } else {
                 claimDailyBonusButton.disabled = false;
                 dailyBonusStatus.textContent = `Заберите свой ежедневный бонус (${DAILY_BONUS_AMOUNT} TapCoin)!`;
-                dailyBonusStatus.style.color = '#68d391'; // Green
+                dailyBonusStatus.style.color = '#68d391'; 
             }
         }
 
@@ -1070,10 +1209,10 @@
                         score: newScoreForTransaction,
                         lastDailyBonusClaimDate: currentTimestamp
                     });
-                }); // End of runTransaction
+                }); 
 
-                lastDailyBonusClaimDate = Date.now(); // Обновляем локально
-                score = parseFloat((score + DAILY_BONUS_AMOUNT).toFixed(2)); // Обновляем локально
+                lastDailyBonusClaimDate = Date.now(); 
+                score = parseFloat((score + DAILY_BONUS_AMOUNT).toFixed(2)); 
                 updateDisplays(); 
                 updateDailyBonusDisplay(); 
                 console.log(`Ежедневный бонус ${DAILY_BONUS_AMOUNT} TapCoin начислен.`);
@@ -1088,27 +1227,25 @@
             }
         }
 
-        // --- Логика авто-сборщика ---
         async function updateAutoCollectorDisplay() {
             if (!buyAutoCollectorButton || !autoCollectorStatus || !autoCollectorCostDisplay) return;
 
             if (hasAutoCollector) {
-                buyAutoCollectorButton.style.display = 'none'; // Скрываем кнопку покупки
-                autoCollectorCostDisplay.style.display = 'none'; // Скрываем стоимость
+                buyAutoCollectorButton.style.display = 'none'; 
+                autoCollectorCostDisplay.style.display = 'none'; 
                 autoCollectorStatus.textContent = "Авто-Сборщик: Активен!";
-                autoCollectorStatus.style.color = '#68d391'; // Green
+                autoCollectorStatus.style.color = '#68d391'; 
             } else {
-                buyAutoCollectorButton.style.display = 'block'; // Показываем кнопку покупки
-                autoCollectorCostDisplay.style.display = 'block'; // Показываем стоимость
+                buyAutoCollectorButton.style.display = 'block'; 
+                autoCollectorCostDisplay.style.display = 'block'; 
                 autoCollectorCostDisplay.textContent = `Стоимость: ${AUTO_COLLECTOR_COST} TapCoins.`;
                 autoCollectorStatus.textContent = "Авто-Сборщик: Не куплен.";
-                autoCollectorStatus.style.color = '#cbd5e0'; // Light text
+                autoCollectorStatus.style.color = '#cbd5e0'; 
 
-                // Проверяем, достаточно ли денег для покупки
                 if (score < AUTO_COLLECTOR_COST) {
                     buyAutoCollectorButton.disabled = true;
                     autoCollectorStatus.textContent = `Недостаточно TapCoins для покупки. Нужно ${AUTO_COLLECTOR_COST}.`;
-                    autoCollectorStatus.style.color = '#fc8181'; // Red
+                    autoCollectorStatus.style.color = '#fc8181'; 
                 } else {
                     buyAutoCollectorButton.disabled = false;
                 }
@@ -1168,10 +1305,10 @@
                         score: newScoreForTransaction,
                         hasAutoCollector: true
                     });
-                }); // End of runTransaction
+                }); 
 
-                score = parseFloat((score - AUTO_COLLECTOR_COST).toFixed(2)); // Обновляем локально
-                hasAutoCollector = true; // Обновляем локально
+                score = parseFloat((score - AUTO_COLLECTOR_COST).toFixed(2)); 
+                hasAutoCollector = true; 
 
                 updateDisplays(); 
                 updateAutoCollectorDisplay(); 
@@ -1188,7 +1325,6 @@
         }
 
 
-        // Функция для вызова рекламного блока Monetag
         function showMonetagAd(callback, targetLoadingText, targetTimerDisplay, targetButton) {
             if (targetButton) targetButton.disabled = true;
             if (targetTimerDisplay) targetTimerDisplay.classList.add('hidden');
@@ -1208,10 +1344,8 @@
             }
         }
 
-        // Начальная загрузка игровых данных и отображение главной страницы при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOMContentLoaded: DOM полностью загружен. Начинается инициализация приложения.");
-            // Получаем ссылки на элементы DOM внутри DOMContentLoaded, когда они гарантированно существуют
             scoreDisplay = document.getElementById('score');
             tapCoinsPerAdDisplay = document.getElementById('tapCoinsPerAdDisplay');
             clickButton = document.getElementById('clickButton');
@@ -1247,20 +1381,22 @@
             claimGroupTaskRewardButton = document.getElementById('claimGroupTaskRewardButton');
             groupTaskStatus = document.getElementById('groupTaskStatus');
 
-            // Получение ссылок на новые элементы
             claimDailyBonusButton = document.getElementById('claimDailyBonusButton');
             dailyBonusStatus = document.getElementById('dailyBonusStatus');
             buyAutoCollectorButton = document.getElementById('buyAutoCollectorButton');
             autoCollectorStatus = document.getElementById('autoCollectorStatus');
             autoCollectorCostDisplay = document.getElementById('autoCollectorCostDisplay');
 
+            // Получаем ссылку на новый чекбокс звука
+            soundToggleInput = document.getElementById('soundToggle');
+
 
             navButtons = document.querySelectorAll('.nav-button');
             pages = document.querySelectorAll('.page-content');
 
-            // --- Attach Event Listeners (теперь, когда элементы гарантированно существуют) ---
             navButtons.forEach(button => {
                 button.addEventListener('click', () => {
+                    playClickSound(); 
                     const pageToShow = button.dataset.page + 'Page';
                     showPage(pageToShow);
                 });
@@ -1268,6 +1404,7 @@
 
             aboutSubNavButtons.forEach(button => {
                 button.addEventListener('click', () => {
+                    playClickSound(); 
                     const subPageToShow = button.dataset.subpage + 'SubPage';
                     showAboutSubPage(subPageToShow);
                 });
@@ -1275,6 +1412,7 @@
 
             shopSubNavButtons.forEach(button => {
                 button.addEventListener('click', () => {
+                    playClickSound(); 
                     const subPageToShow = button.dataset.subpage + 'SubPage';
                     showShopSubPage(subPageToShow);
                 });
@@ -1282,6 +1420,7 @@
 
             if (clickButton) {
                 clickButton.addEventListener('click', async () => { 
+                    playClickSound(); 
                     console.log("Click button clicked.");
                     showMonetagAd(async () => { 
                         let timeLeft = adTimerDuration;
@@ -1291,7 +1430,7 @@
 
                         const timerInterval = setInterval(async () => { 
                             timeLeft--;
-                            if (timerDisplay) timerDisplay.textContent = `До награды: ${timeLeft} sec`;
+                            if (timerDisplay) timerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                             if (timeLeft <= 0) {
                                 clearInterval(timerInterval); 
@@ -1309,6 +1448,7 @@
 
             if (upgradeClickButton) {
                 upgradeClickButton.addEventListener('click', async () => { 
+                    playClickSound(); 
                     console.log("Upgrade click button clicked.");
                     showMonetagAd(async () => { 
                         let timeLeft = adTimerDuration;
@@ -1318,7 +1458,7 @@
 
                         const upgradeTimerInterval = setInterval(async () => { 
                             timeLeft--;
-                            if (upgradeTimerDisplay) upgradeTimerDisplay.textContent = `До награды: ${timeLeft} sec`;
+                            if (upgradeTimerDisplay) upgradeTimerDisplay.textContent = `До награды: ${timeLeft} сек`;
 
                             if (timeLeft <= 0) {
                                 clearInterval(upgradeTimerInterval);
@@ -1339,6 +1479,7 @@
 
             if (upgradePassiveIncomeButton) {
                 upgradePassiveIncomeButton.addEventListener('click', async () => { 
+                    playClickSound(); 
                     console.log("Upgrade passive income button clicked.");
                     showMonetagAd(async () => { 
                         let timeLeft = adTimerDuration;
@@ -1366,6 +1507,7 @@
 
             if (claimPassiveIncomeButton) {
                 claimPassiveIncomeButton.addEventListener('click', async () => { 
+                    playClickSound(); 
                     console.log("Claim passive income button clicked.");
                     if (accumulatedPassiveIncome > 0.0001) { 
                         score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
@@ -1381,6 +1523,7 @@
 
             if (copyReferralLinkButton) {
                 copyReferralLinkButton.addEventListener('click', async () => {
+                    playClickSound(); 
                     const referralLink = `${window.location.origin}${window.location.pathname}?startapp=${userId}`;
                     try {
                         const tempInput = document.createElement('textarea');
@@ -1410,6 +1553,7 @@
 
             if (claimGroupTaskRewardButton) {
                 claimGroupTaskRewardButton.addEventListener('click', async () => {
+                    playClickSound(); 
                     if (!db || !userId || !isAuthReady) {
                         if (groupTaskStatus) {
                             groupTaskStatus.textContent = "Ошибка: база данных не готова.";
@@ -1450,10 +1594,8 @@
                                 score: newScoreForTransaction,
                                 completedTasks: updatedCompletedTasksForTransaction
                             });
-                        }); // End of runTransaction
+                        }); 
 
-                        // Обновляем локальное состояние игры после успешной транзакции
-                        // Вызов loadGameData() обновит все глобальные переменные и UI
                         await loadGameData(); 
 
                         updateDisplays(); 
@@ -1471,18 +1613,34 @@
                 });
             }
 
-            // Обработчик для ежедневного бонуса
             if (claimDailyBonusButton) {
-                claimDailyBonusButton.addEventListener('click', claimDailyBonus);
+                claimDailyBonusButton.addEventListener('click', () => { 
+                    playClickSound(); 
+                    claimDailyBonus();
+                });
             }
 
-            // Обработчик для покупки авто-сборщика
             if (buyAutoCollectorButton) {
-                buyAutoCollectorButton.addEventListener('click', buyAutoCollector);
+                buyAutoCollectorButton.addEventListener('click', () => { 
+                    playClickSound(); 
+                    buyAutoCollector();
+                });
             }
 
+            // Обработчик для чекбокса звука в настройках
+            if (soundToggleInput) {
+                soundToggleInput.addEventListener('change', toggleSound);
+            }
 
-            // Инициализация Telegram Web App
+            let firstInteractionDone = false;
+            document.addEventListener('click', () => {
+                if (!firstInteractionDone) {
+                    startBackgroundMusic(); // Запуск музыки при первом клике
+                    firstInteractionDone = true;
+                }
+            }, { once: true }); 
+
+
             if (window.Telegram && window.Telegram.WebApp) {
                 window.Telegram.WebApp.ready();
             } else {
@@ -1491,9 +1649,8 @@
 
             await initializeFirebase();
             showPage('mainPage'); 
-        }); // Correctly closing DOMContentLoaded
+        }); 
 
-        // Сохранение игровых данных при закрытии или скрытии приложения
         window.addEventListener('beforeunload', saveGameData);
         window.addEventListener('pagehide', () => {
             console.log("pagehide: Приложение скрывается/закрывается. Сохранение данных.");
