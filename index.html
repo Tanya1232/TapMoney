@@ -13,8 +13,6 @@
         body {
             font-family: 'Inter', sans-serif; /* Fallback font */
             background-color: #1a202c; /* Fallback solid dark background */
-            /* Обновленная ссылка на фоновое изображение - УДАЛЕНО */
-            /* background-image: url('https://github.com/Tanya1232/TapMoney/blob/main/Flux_Dev_Vibrant_cartoon_cityscape_panoramic_view_with_buildin_1.jpg?raw=true'); */ 
             background-size: cover; /* Cover the entire screen */
             background-position: center; /* Center the image */
             background-repeat: no-repeat; /* Do not repeat the image */
@@ -281,6 +279,134 @@
             color: #cbd5e0;
             margin-top: 10px;
         }
+        /* Стили для кнопки переключения (Toggle Switch) */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px; /* Ширина переключателя */
+            height: 34px; /* Высота переключателя */
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc; /* Цвет фона выключенного состояния */
+            transition: .4s;
+            border-radius: 34px; /* Закругленные края */
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px; /* Высота кружка */
+            width: 26px; /* Ширина кружка */
+            left: 4px; /* Отступ слева */
+            bottom: 4px; /* Отступ снизу */
+            background-color: white; /* Цвет кружка */
+            transition: .4s;
+            border-radius: 50%; /* Круглая форма */
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3; /* Цвет фона включенного состояния */
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px); /* Перемещение кружка вправо */
+        }
+
+        /* --- Snake Game Specific Styles (добавлены или адаптированы из вашего кода Змейки) --- */
+        .snake-game-container {
+            background-color: #2d3748; /* Tailwind gray-800 equivalent */
+            border-radius: 1rem; /* rounded-xl */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            padding: 1.5rem; /* p-6 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem; /* gap-4 */
+            max-width: 90%; /* Responsive width */
+            width: 500px; /* Max width for desktop */
+            margin-top: 20px; /* Space from top */
+            margin-bottom: 20px; /* Space from bottom */
+        }
+
+        #snakeGameCanvas { /* Specific ID for snake game canvas */
+            background-color: #4a5568; /* Tailwind gray-700 equivalent */
+            border: 2px solid #a0aec0; /* Tailwind gray-500 equivalent */
+            border-radius: 0.5rem; /* rounded-md */
+            display: block;
+            touch-action: manipulation; /* Improves responsiveness for touch events */
+        }
+
+        .snake-controls { /* Specific class for snake game controls */
+            display: flex;
+            flex-wrap: wrap; /* Allow controls to wrap on smaller screens */
+            justify-content: center;
+            gap: 0.75rem; /* gap-3 */
+        }
+
+        .snake-btn { /* Specific class for snake game buttons */
+            background-color: #4299e1; /* Tailwind blue-500 equivalent */
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 1.5rem; /* py-3 px-6 */
+            border-radius: 0.75rem; /* rounded-lg */
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .snake-btn:hover {
+            background-color: #3182ce; /* Tailwind blue-600 equivalent */
+            transform: translateY(-2px);
+        }
+
+        .snake-btn:active {
+            background-color: #2b6cb0; /* Tailwind blue-700 equivalent */
+            transform: translateY(0);
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        .snake-score-display { /* Specific class for snake game score display */
+            color: #e2e8f0; /* Tailwind gray-200 equivalent */
+            font-size: 1.25rem; /* text-xl */
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .snake-message-box { /* Specific class for snake game message box */
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            display: none; /* Hidden by default */
+        }
     </style>
     <!-- Monetag Ad Block Code (Interstitial) -->
     <script src='//libtl.com/sdk.js' data-zone='9473169' data-sdk='show_9473169'></script>
@@ -400,8 +526,8 @@
         <h2 class="text-3xl font-bold text-indigo-300 game-font">Игры</h2>
         <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Змейка</h3>
-            <p class="sub-text">Классическая игра "Змейка".</p>
-            <p class="sub-text text-yellow-400">В разработке...</p>
+            <p class="sub-text">Собирай TapCoins, играя в Змейку!</p> <!-- Изменен текст описания -->
+            <button id="playSnakeGameBtn" class="upgrade-button">Играть в Змейку</button> <!-- Кнопка для запуска Змейки -->
         </div>
         <div class="generic-page-content flex flex-col items-center mb-2">
             <h3 class="sub-heading">Камень, ножницы, бумага</h3>
@@ -415,12 +541,34 @@
         </div>
     </div>
 
+    <!-- Snake Game Page Content (интегрированная Змейка) -->
+    <div id="snakeGamePage" class="page-content">
+        <h2 class="text-3xl font-bold text-white mb-4 game-font">Змейка</h2>
+        <div class="snake-score-display">Счет: <span id="snakeScore">0.00</span></div>
+        <canvas id="snakeGameCanvas" width="300" height="300"></canvas>
+        <div class="snake-controls mt-4">
+            <button id="startSnakeGameBtn" class="snake-btn">Начать игру</button>
+            <button id="restartSnakeGameBtn" class="snake-btn" style="display: none;">Перезапустить</button>
+        </div>
+        <!-- Touch controls for mobile -->
+        <div class="flex flex-col gap-2 w-full max-w-sm sm:hidden mt-4">
+            <button id="snakeUpBtn" class="snake-btn">↑</button>
+            <div class="flex justify-center gap-2">
+                <button id="snakeLeftBtn" class="snake-btn">←</button>
+                <button id="snakeDownBtn" class="snake-btn">↓</button>
+                <button id="snakeRightBtn" class="snake-btn">→</button>
+            </div>
+        </div>
+        <div id="snakeMessageBox" class="snake-message-box"></div>
+    </div>
+
+
     <!-- About Page Content (Об игре) -->
     <div id="aboutPage" class="page-content">
         <h2 class="text-3xl font-bold text-teal-300 game-font">Об игре</h2>
         <div class="sub-navbar">
             <button class="sub-nav-button active" data-subpage="news">Новости</button>
-            <button class="sub-nav-button" data-subpage="description">Описание игры</button>
+            <button class="sub-nav-button" data-subpage="description">Описание игры</不斷更新...>
         </div>
         <div id="newsSubPage" class="sub-page-content active generic-page-content">
             <span class="sub-heading">Последние новости</span><br>
@@ -457,10 +605,13 @@
             <span class="sub-heading">Язык</span><br>
             <span class="sub-text">Русский</span>
             <br><br>
-            <span class="sub-heading">Звук</span><br>
+            <!-- Обновленный раздел звука с кнопкой-переключателем -->
             <div class="flex items-center justify-center mt-2">
-                <label for="soundToggle" class="sub-text mr-3">Включить звук:</label>
-                <input type="checkbox" id="soundToggle" class="form-checkbox h-5 w-5 text-blue-600 rounded" checked>
+                <span class="sub-heading mr-3">Звук:</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="soundToggle" checked>
+                    <span class="slider"></span>
+                </label>
             </div>
         </p>
     </div>
@@ -537,20 +688,18 @@
         // Глобальный ID приложения из окружения Canvas. Используем его, если он доступен, иначе наш projectId.
         // Для развернутых приложений на GitHub Pages, __app_id может быть не определен, поэтому используем firebaseConfig.projectId.
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; 
-        let isAuthReady = false; // Флаг готовности аутентификации
+        let isAuthReady = false; 
 
-        // --- Основные элементы игры (объявляем их здесь, но получаем ссылки на них в DOMContentLoaded) ---
+        // --- DOM элементы (объявляем здесь глобально) ---
         let scoreDisplay;
         let tapCoinsPerAdDisplay;
         let clickButton;
         let timerDisplay;
         let loadingText;
         let accumulatedValueDisplay;
-
         let upgradeClickButton;
         let upgradeTimerDisplay;
         let upgradeLoadingText;
-
         let passiveIncomeRateDisplay;
         let passiveIncomeRateDisplayImp;
         let upgradePassiveIncomeButton;
@@ -558,29 +707,25 @@
         let passiveIncomeLoadingText;
         let accumulatedPassiveIncomeDisplay;
         let claimPassiveIncomeButton;
-
         let aboutSubNavButtons;
         let aboutSubPages;
-
         let shopSubNavButtons;
         let shopSubPages;
-
         let referralIdDisplay;
         let invitedByDisplay;
         let copyReferralLinkButton;
         let referralStatus;
         let referredUsersList;
         let noReferredUsers;
-
         let claimGroupTaskRewardButton;
         let groupTaskStatus;
-
-        // Новые элементы для ежедневного бонуса и авто-сборщика
         let claimDailyBonusButton;
         let dailyBonusStatus;
         let buyAutoCollectorButton;
         let autoCollectorStatus;
         let autoCollectorCostDisplay;
+        let soundToggleInput;
+        let playSnakeGameBtn; // Для кнопки запуска Змейки
 
         // Глобальные переменные для аудио
         let audioContext;
@@ -588,41 +733,37 @@
         let backgroundGainNode = null;
         let backgroundAudioBuffer = null; // Для хранения декодированных аудиоданных
         let isMusicPlaying = false;
-        let isMuted = false; 
+        // isMuted не будет объявлен здесь, он будет частью window.isMuted
 
         // Константы для аудио
-        // Обновленная ссылка на музыку
-        const backgroundMusicUrl = './happy-day-1-20240418-det.mp3';
+        const backgroundMusicUrl = 'https://raw.githubusercontent.com/Tanya1232/TapMoney/main/happy-day-1-20240418-det.mp3'; // ОБНОВЛЕННАЯ ССЫЛКА
         const clickSoundFrequency = 880; 
         const clickSoundDuration = 0.1; 
 
-        // Элемент для переключателя звука в настройках
-        let soundToggleInput;
+        // Игровые данные (теперь объявляем их как свойства window)
+        window.score = 0;
+        window.tapCoinsPerAd = 1.00; // Начальное значение монет за рекламу
+        window.passiveIncomeRate = 0.000; // TapCoins в час
+        window.lastLoginTimestamp = Date.now(); // Время последнего входа в приложение
+        window.accumulatedPassiveIncome = 0; // Накопленный доход с последнего входа
+        window.invitedBy = null; // ID пользователя, который пригласил текущего пользователя
+        window.completedTasks = {}; // Объект для хранения выполненных заданий: { 'taskId': true }
+        window.lastDailyBonusClaimDate = null; // Дата последнего получения ежедневного бонуса
+        window.hasAutoCollector = false; // Куплен ли авто-сборщик
+        window.isMuted = false; // Состояние включен/выключен (Инициализируем здесь, чтобы гарантировать тип)
 
-        // Игровые данные
-        let score = 0;
-        let tapCoinsPerAd = 1.00; // Начальное значение монет за рекламу
         const adTimerDuration = 15; // Длительность таймера в секундах (15 или 30)
-        let passiveIncomeRate = 0.000; // TapCoins в час
-        let lastLoginTimestamp = Date.now(); // Время последнего входа в приложение
-        let accumulatedPassiveIncome = 0; // Накопленный доход с последнего входа
-        let invitedBy = null; // ID пользователя, который пригласил текущего пользователя
         const NEW_USER_BONUS = 10; // Бонус для нового пользователя, пришедшего по реферальной ссылке
         const REFERRER_BONUS = 25; // Бонус для реферера за каждого приглашенного
-        let completedTasks = {}; // Объект для хранения выполненных заданий: { 'taskId': true }
-        
-        // Новые игровые данные для ежедневного бонуса и авто-сборщика
-        let lastDailyBonusClaimDate = null; // Дата последнего получения ежедневного бонуса
-        let hasAutoCollector = false; // Куплен ли авто-сборщик
         const AUTO_COLLECTOR_COST = 500; // Стоимость авто-сборщика
         const DAILY_BONUS_AMOUNT = 1; // Количество TapCoins за ежедневный бонус
         const AUTO_COLLECT_INTERVAL_HOURS = 2; // Интервал авто-сбора в часах
 
 
         // --- Управление вкладками/страницами ---
-        let navButtons; // Объявляем, но получаем ссылку в DOMContentLoaded
-        let pages; // Объявляем, но получаем ссылку в DOMContentLoaded
-        let currentPageId = 'mainPage'; // Текущая активная страница
+        let navButtons; 
+        let pages; 
+        let currentPageId = 'mainPage'; 
 
         // --- Аудио функции ---
         // Функция для загрузки и декодирования аудио файла
@@ -643,15 +784,15 @@
             } catch (error) {
                 console.error("Error loading or decoding background music:", error);
                 // Отключим музыку, если возникла ошибка загрузки
-                isMuted = true;
-                updateSoundToggleDisplay();
+                window.isMuted = true; // Установим флаг isMuted в true
+                updateSoundToggleDisplay(); // Обновим переключатель
                 return null;
             }
         }
 
         // Функция для воспроизведения фоновой музыки
         async function startBackgroundMusic() {
-            if (isMuted) {
+            if (window.isMuted) { // Если заглушено, не запускаем
                 console.log("Музыка заглушена, не запускаем фоновую музыку.");
                 return;
             }
@@ -674,8 +815,11 @@
                     }
                 }
 
-                // Необходимо создать новый AudioBufferSourceNode каждый раз, когда мы хотим запустить воспроизведение
-                // (предыдущий backgroundSource.stop() делает его непригодным для повторного использования)
+                if (backgroundSource) { // Остановим предыдущий источник, если он существует
+                    backgroundSource.stop();
+                    backgroundSource.disconnect();
+                }
+
                 backgroundSource = audioContext.createBufferSource();
                 backgroundSource.buffer = backgroundAudioBuffer;
                 backgroundSource.loop = true; // Зацикливаем музыку
@@ -693,7 +837,7 @@
 
             } catch (error) {
                 console.error("Ошибка при запуске фоновой музыки:", error);
-                isMuted = true; // Заглушим, если не удалось запустить
+                window.isMuted = true; // Заглушим, если не удалось запустить
                 updateSoundToggleDisplay();
             }
         }
@@ -711,7 +855,7 @@
 
         // Функция для воспроизведения звука клика
         function playClickSound() {
-            if (isMuted) return; // Не воспроизводим, если звук выключен
+            if (window.isMuted) return; // Не воспроизводим, если звук выключен
 
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -734,28 +878,35 @@
 
         // Функция для переключения состояния звука (музыка и эффекты)
         function toggleSound() {
-            isMuted = !isMuted;
-            if (isMuted) {
+            window.isMuted = !window.isMuted;
+            if (window.isMuted) {
                 stopBackgroundMusic();
             } else {
                 startBackgroundMusic(); // Запустит загрузку и воспроизведение, если еще не запущено
             }
             updateSoundToggleDisplay(); // Обновляем чекбокс в настройках
-            saveGameData(); // Сохраняем новое состояние звука
-            console.log("Состояние звука изменено на:", isMuted ? "выключено" : "включено");
+            window.saveGameData(); // Сохраняем новое состояние звука
+            console.log("Состояние звука изменено на:", window.isMuted ? "выключено" : "включено");
         }
 
-        // Функция для обновления состояния чекбокса звука в настройках
+        // Функция для обновления состояния переключателя звука в настройках
         function updateSoundToggleDisplay() {
             if (soundToggleInput) {
-                soundToggleInput.checked = !isMuted;
+                soundToggleInput.checked = !window.isMuted;
             }
         }
 
-        // --- Основные функции игры (далее идут функции, которые были до изменений) ---
+        // --- Основные функции игры TapMoney ---
 
         // Функция для отображения конкретной страницы и скрытия остальных
         function showPage(pageId) {
+            // Останавливаем активные игры при смене страницы
+            if (currentPageId === 'snakeGamePage') {
+                snakeGame.deactivateListeners();
+                snakeGame.stop();
+            }
+            // Здесь можно добавить остановку других игр, если они будут
+
             pages.forEach(page => {
                 if (page.id === pageId) {
                     page.classList.add('active');
@@ -789,7 +940,7 @@
                 if (loadingText) loadingText.textContent = "Загрузка данных..."; 
 
                 if (isAuthReady && db && userId) { 
-                    loadGameData(); 
+                    window.loadGameData(); 
                 } 
             } else if (pageId === 'improvementsPage') {
                  if (upgradeTimerDisplay && upgradeLoadingText && upgradeClickButton) {
@@ -800,7 +951,7 @@
                     }
                  }
                 if (passiveIncomeRateDisplayImp) {
-                    passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
+                    passiveIncomeRateDisplayImp.textContent = window.passiveIncomeRate.toFixed(3);
                 }
                 updateAutoCollectorDisplay(); 
             } else if (pageId === 'aboutPage') {
@@ -813,7 +964,11 @@
                 updateGroupTaskStatus();
                 updateDailyBonusDisplay(); 
             } else if (pageId === 'settingsPage') { // Добавлено для страницы настроек
-                updateSoundToggleDisplay(); // Обновляем состояние чекбокса при переходе на страницу настроек
+                updateSoundToggleDisplay(); // Обновляем состояние переключателя при переходе на страницу настроек
+            } else if (pageId === 'snakeGamePage') { // Активация игры Змейка
+                snakeGame.init();
+                snakeGame.activateListeners();
+                snakeGame.draw(); // Первоначальная отрисовка
             }
             currentPageId = pageId; 
         }
@@ -852,20 +1007,20 @@
             });
         }
 
-        function updateDisplays() {
-            if (scoreDisplay) scoreDisplay.textContent = score.toFixed(2);
-            if (tapCoinsPerAdDisplay) tapCoinsPerAdDisplay.textContent = tapCoinsPerAd.toFixed(2);
-            if (passiveIncomeRateDisplay) passiveIncomeRateDisplay.textContent = passiveIncomeRate.toFixed(3);
+        window.updateDisplays = function() { // Привязываем к window
+            if (scoreDisplay) scoreDisplay.textContent = window.score.toFixed(2);
+            if (tapCoinsPerAdDisplay) tapCoinsPerAdDisplay.textContent = window.tapCoinsPerAd.toFixed(2);
+            if (passiveIncomeRateDisplay) passiveIncomeRateDisplay.textContent = window.passiveIncomeRate.toFixed(3);
             
-            if (accumulatedValueDisplay) accumulatedValueDisplay.textContent = accumulatedPassiveIncome.toFixed(3); 
-            if (claimPassiveIncomeButton) claimPassiveIncomeButton.disabled = (accumulatedPassiveIncome < 0.001); 
+            if (accumulatedValueDisplay) accumulatedValueDisplay.textContent = window.accumulatedPassiveIncome.toFixed(3); 
+            if (claimPassiveIncomeButton) claimPassiveIncomeButton.disabled = (window.accumulatedPassiveIncome < 0.001); 
 
             if (passiveIncomeRateDisplayImp) {
-                passiveIncomeRateDisplayImp.textContent = passiveIncomeRate.toFixed(3);
+                passiveIncomeRateDisplayImp.textContent = window.passiveIncomeRate.toFixed(3);
             }
 
             if (referralIdDisplay) referralIdDisplay.textContent = userId; 
-            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
+            if (invitedByDisplay) invitedByDisplay.textContent = window.invitedBy ? window.invitedBy : "Нет"; 
 
             if (currentPageId === 'tasksPage') {
                 updateGroupTaskStatus();
@@ -877,7 +1032,7 @@
             }
         }
 
-        async function saveGameData() {
+        window.saveGameData = async function() { // Явно привязываем к window
             if (!db || !userId) {
                 console.error("saveGameData: Firestore или userId не инициализированы. Невозможно сохранить данные.");
                 return;
@@ -885,16 +1040,16 @@
             try {
                 const userDocRef = doc(db, "artifacts", appId, "users", userId, "gameData", "progress");
                 const dataToSave = {
-                    score: score,
-                    tapCoinsPerAd: tapCoinsPerAd,
-                    passiveIncomeRate: passiveIncomeRate,
-                    lastLoginTimestamp: lastLoginTimestamp,
-                    accumulatedPassiveIncome: accumulatedPassiveIncome, 
-                    invitedBy: invitedBy, 
-                    completedTasks: completedTasks,
-                    lastDailyBonusClaimDate: lastDailyBonusClaimDate, 
-                    hasAutoCollector: hasAutoCollector, 
-                    isMuted: isMuted // Сохраняем статус звука
+                    score: window.score,
+                    tapCoinsPerAd: window.tapCoinsPerAd,
+                    passiveIncomeRate: window.passiveIncomeRate,
+                    lastLoginTimestamp: window.lastLoginTimestamp,
+                    accumulatedPassiveIncome: window.accumulatedPassiveIncome, 
+                    invitedBy: window.invitedBy, 
+                    completedTasks: window.completedTasks,
+                    lastDailyBonusClaimDate: window.lastDailyBonusClaimDate, 
+                    hasAutoCollector: window.hasAutoCollector, 
+                    isMuted: window.isMuted // Сохраняем состояние isMuted
                 };
                 await setDoc(userDocRef, dataToSave, { merge: true }); 
                 console.log("saveGameData: Игровые данные сохранены в Firestore:", dataToSave);
@@ -903,7 +1058,7 @@
             }
         }
 
-        async function loadGameData() {
+        window.loadGameData = async function() { // Явно привязываем к window
             console.log("loadGameData: Начало загрузки игровых данных.");
             if (loadingText) loadingText.textContent = "Загрузка игровых данных...";
             if (clickButton) clickButton.disabled = true; 
@@ -922,78 +1077,88 @@
                 let isNewUser = false;
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    score = parseFloat(data.score || 0);
-                    tapCoinsPerAd = parseFloat(data.tapCoinsPerAd || 1.00);
-                    passiveIncomeRate = parseFloat(data.passiveIncomeRate || 0.000);
-                    lastLoginTimestamp = parseInt(data.lastLoginTimestamp || Date.now(), 10);
-                    accumulatedPassiveIncome = parseFloat(data.accumulatedPassiveIncome || 0);
-                    invitedBy = data.invitedBy || null; 
-                    completedTasks = data.completedTasks || {}; 
-                    lastDailyBonusClaimDate = data.lastDailyBonusClaimDate || null; 
-                    hasAutoCollector = data.hasAutoCollector || false; 
-                    isMuted = data.isMuted || false; // Загружаем статус звука
+                    // Явное преобразование типов при загрузке
+                    window.score = Number(data.score || 0);
+                    window.tapCoinsPerAd = Number(data.tapCoinsPerAd || 1.00);
+                    window.passiveIncomeRate = Number(data.passiveIncomeRate || 0.000);
+                    window.lastLoginTimestamp = Number(data.lastLoginTimestamp || Date.now());
+                    window.accumulatedPassiveIncome = Number(data.accumulatedPassiveIncome || 0);
+                    window.invitedBy = data.invitedBy || null; 
+                    window.completedTasks = data.completedTasks || {}; 
+                    window.lastDailyBonusClaimDate = data.lastDailyBonusClaimDate || null; 
+                    window.hasAutoCollector = Boolean(data.hasAutoCollector || false); 
+                    // Убеждаемся, что isMuted всегда boolean
+                    window.isMuted = Boolean(typeof data.isMuted !== 'undefined' ? data.isMuted : false); 
                     console.log("loadGameData: Игровые данные загружены из Firestore:", data);
                 } else {
                     console.log("loadGameData: Существующие игровые данные в Firestore не найдены, инициализация по умолчанию.");
                     isNewUser = true;
-                    score = 0;
-                    tapCoinsPerAd = 1.00;
-                    passiveIncomeRate = 0.000;
-                    lastLoginTimestamp = Date.now();
-                    accumulatedPassiveIncome = 0;
-                    invitedBy = null; 
-                    completedTasks = {}; 
-                    lastDailyBonusClaimDate = null;
-                    hasAutoCollector = false;
-                    isMuted = false;
+                    window.score = 0;
+                    window.tapCoinsPerAd = 1.00;
+                    window.passiveIncomeRate = 0.000;
+                    window.lastLoginTimestamp = Date.now();
+                    window.accumulatedPassiveIncome = 0;
+                    window.invitedBy = null; 
+                    window.completedTasks = {}; 
+                    window.lastDailyBonusClaimDate = null;
+                    window.hasAutoCollector = false;
+                    window.isMuted = false; // По умолчанию звук включен для нового пользователя
                 }
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const initialReferrerId = urlParams.get('startapp'); 
 
                 if (isNewUser && initialReferrerId && initialReferrerId !== userId) {
-                    invitedBy = initialReferrerId; 
-                    score = parseFloat((score + NEW_USER_BONUS).toFixed(2)); 
+                    window.invitedBy = initialReferrerId; 
+                    window.score = parseFloat((window.score + NEW_USER_BONUS).toFixed(2)); 
                     console.log(`Новый пользователь приглашен ${initialReferrerId}. Бонус ${NEW_USER_BONUS} TapCoins начислен.`);
                     
                     await awardReferralBonusToReferrer(initialReferrerId, userId);
                 }
 
                 const currentTime = Date.now();
-                const elapsedTimeMs = currentTime - lastLoginTimestamp;
+                const elapsedTimeMs = currentTime - window.lastLoginTimestamp;
                 const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60); 
 
-                console.log(`loadGameData Debug: lastLoginTimestamp: ${new Date(lastLoginTimestamp).toLocaleString()}, currentTime: ${new Date(currentTime).toLocaleString()}`);
+                console.log(`loadGameData Debug: lastLoginTimestamp: ${new Date(window.lastLoginTimestamp).toLocaleString()}, currentTime: ${new Date(currentTime).toLocaleString()}`);
                 console.log(`loadGameData Debug: elapsedTimeMs: ${elapsedTimeMs}, elapsedTimeHours: ${elapsedTimeHours.toFixed(4)}`);
-                console.log(`loadGameData Debug: passiveIncomeRate: ${passiveIncomeRate.toFixed(3)}, initial accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
+                console.log(`loadGameData Debug: passiveIncomeRate: ${window.passiveIncomeRate.toFixed(3)}, initial accumulatedPassiveIncome: ${window.accumulatedPassiveIncome.toFixed(4)}`);
 
-                if (hasAutoCollector && passiveIncomeRate > 0) {
+                if (window.hasAutoCollector && window.passiveIncomeRate > 0) {
                     const collectIntervalMs = AUTO_COLLECT_INTERVAL_HOURS * 60 * 60 * 1000; 
-                    let timeSinceLastCollect = currentTime - lastLoginTimestamp; 
+                    let timeSinceLastCollect = currentTime - window.lastLoginTimestamp; 
                     
                     if (timeSinceLastCollect >= collectIntervalMs) {
                         const numberOfCollections = Math.floor(timeSinceLastCollect / collectIntervalMs);
-                        const collectedAmount = passiveIncomeRate * AUTO_COLLECT_INTERVAL_HOURS * numberOfCollections;
-                        score = parseFloat((score + collectedAmount).toFixed(2));
-                        accumulatedPassiveIncome = 0; 
-                        lastLoginTimestamp = currentTime - (timeSinceLastCollect % collectIntervalMs); 
+                        const collectedAmount = window.passiveIncomeRate * AUTO_COLLECT_INTERVAL_HOURS * numberOfCollections;
+                        window.score = parseFloat((window.score + collectedAmount).toFixed(2));
+                        window.accumulatedPassiveIncome = 0; 
+                        window.lastLoginTimestamp = currentTime - (timeSinceLastCollect % collectIntervalMs); 
                         console.log(`Авто-сборщик собрал ${collectedAmount.toFixed(2)} TapCoins.`);
                     }
-                } else if (passiveIncomeRate > 0 && elapsedTimeHours > 0) { 
-                    const newlyAccumulated = passiveIncomeRate * elapsedTimeHours;
-                    accumulatedPassiveIncome = accumulatedPassiveIncome + newlyAccumulated; 
-                    console.log(`loadGameData Debug: newlyAccumulated: ${newlyAccumulated.toFixed(4)}, final accumulatedPassiveIncome: ${accumulatedPassiveIncome.toFixed(4)}`);
+                } else if (window.passiveIncomeRate > 0 && elapsedTimeHours > 0) { 
+                    const newlyAccumulated = window.passiveIncomeRate * elapsedTimeHours;
+                    window.accumulatedPassiveIncome = window.accumulatedPassiveIncome + newlyAccumulated; 
+                    console.log(`loadGameData Debug: newlyAccumulated: ${newlyAccumulated.toFixed(4)}, final accumulatedPassiveIncome: ${window.accumulatedPassiveIncome.toFixed(4)}`);
                 }
-                lastLoginTimestamp = currentTime; 
+                window.lastLoginTimestamp = currentTime; 
 
-                await saveGameData(); 
+                await window.saveGameData(); 
+                
+                // DEBUGGING LOGS BEFORE DISPLAY UPDATE
+                console.log("DEBUG Before window.updateDisplays():");
+                console.log("DEBUG: window.score type:", typeof window.score, "value:", window.score);
+                console.log("DEBUG: window.tapCoinsPerAd type:", typeof window.tapCoinsPerAd, "value:", window.tapCoinsPerAd);
+                console.log("DEBUG: window.passiveIncomeRate type:", typeof window.passiveIncomeRate, "value:", window.passiveIncomeRate);
+                console.log("DEBUG: window.accumulatedPassiveIncome type:", typeof window.accumulatedPassiveIncome, "value:", window.accumulatedPassiveIncome);
+                console.log("DEBUG: window.isMuted type:", typeof window.isMuted, "value:", window.isMuted);
 
-                updateDisplays(); 
+                window.updateDisplays(); 
                 
                 // Если музыка не заглушена, пытаемся запустить ее
-                if (!isMuted && !isMusicPlaying) {
+                if (!window.isMuted && !isMusicPlaying) {
                     startBackgroundMusic(); 
-                } else if (isMuted && backgroundSource) {
+                } else if (window.isMuted && backgroundSource) {
                     stopBackgroundMusic(); // Остановим, если каким-то образом играет при isMuted
                 }
 
@@ -1039,7 +1204,7 @@
                 isAuthReady = true; 
                 console.log("initializeFirebase: Firebase успешно инициализирован и аутентифицирован.");
 
-                await loadGameData(); 
+                await window.loadGameData(); 
 
             } catch (error) {
                 console.error("initializeFirebase: КРИТИЧЕСКАЯ ОШИБКА: Firebase инициализация или аутентификация не удались:", error);
@@ -1092,7 +1257,7 @@
             }
 
             if (referralIdDisplay) referralIdDisplay.textContent = userId; 
-            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
+            if (invitedByDisplay) invitedByDisplay.textContent = window.invitedBy ? window.invitedBy : "Нет"; 
 
             if (referredUsersList) referredUsersList.innerHTML = ''; 
             if (noReferredUsers) noReferredUsers.classList.remove('hidden'); 
@@ -1124,7 +1289,7 @@
 
         async function updateReferralDisplays() {
             if (referralIdDisplay) referralIdDisplay.textContent = userId; 
-            if (invitedByDisplay) invitedByDisplay.textContent = invitedBy ? invitedBy : "Нет"; 
+            if (invitedByDisplay) invitedByDisplay.textContent = window.invitedBy ? window.invitedBy : "Нет"; 
             await updateReferredUsersList();
         }
 
@@ -1134,7 +1299,7 @@
         async function updateGroupTaskStatus() {
             if (!claimGroupTaskRewardButton || !groupTaskStatus) return;
 
-            if (completedTasks[JOIN_GROUP_TASK_ID]) {
+            if (window.completedTasks[JOIN_GROUP_TASK_ID]) {
                 claimGroupTaskRewardButton.disabled = true;
                 groupTaskStatus.textContent = "Задание выполнено! Награда получена.";
                 groupTaskStatus.style.color = '#68d391'; 
@@ -1157,7 +1322,7 @@
         async function updateDailyBonusDisplay() {
             if (!claimDailyBonusButton || !dailyBonusStatus) return;
 
-            if (lastDailyBonusClaimDate && isToday(lastDailyBonusClaimDate)) {
+            if (window.lastDailyBonusClaimDate && isToday(window.lastDailyBonusClaimDate)) {
                 claimDailyBonusButton.disabled = true;
                 dailyBonusStatus.textContent = `Ежедневный бонус (${DAILY_BONUS_AMOUNT} TapCoin) уже получен сегодня.`;
                 dailyBonusStatus.style.color = '#f6ad55'; 
@@ -1178,7 +1343,7 @@
                 return;
             }
 
-            if (lastDailyBonusClaimDate && isToday(lastDailyBonusClaimDate)) {
+            if (window.lastDailyBonusClaimDate && isToday(window.lastDailyBonusClaimDate)) {
                 if (dailyBonusStatus) {
                     dailyBonusStatus.textContent = "Вы уже получили ежедневный бонус сегодня.";
                     dailyBonusStatus.style.color = '#f6ad55'; 
@@ -1211,9 +1376,9 @@
                     });
                 }); 
 
-                lastDailyBonusClaimDate = Date.now(); 
-                score = parseFloat((score + DAILY_BONUS_AMOUNT).toFixed(2)); 
-                updateDisplays(); 
+                window.lastDailyBonusClaimDate = Date.now(); 
+                window.score = parseFloat((window.score + DAILY_BONUS_AMOUNT).toFixed(2)); 
+                window.updateDisplays(); 
                 updateDailyBonusDisplay(); 
                 console.log(`Ежедневный бонус ${DAILY_BONUS_AMOUNT} TapCoin начислен.`);
 
@@ -1230,7 +1395,7 @@
         async function updateAutoCollectorDisplay() {
             if (!buyAutoCollectorButton || !autoCollectorStatus || !autoCollectorCostDisplay) return;
 
-            if (hasAutoCollector) {
+            if (window.hasAutoCollector) {
                 buyAutoCollectorButton.style.display = 'none'; 
                 autoCollectorCostDisplay.style.display = 'none'; 
                 autoCollectorStatus.textContent = "Авто-Сборщик: Активен!";
@@ -1242,7 +1407,7 @@
                 autoCollectorStatus.textContent = "Авто-Сборщик: Не куплен.";
                 autoCollectorStatus.style.color = '#cbd5e0'; 
 
-                if (score < AUTO_COLLECTOR_COST) {
+                if (window.score < AUTO_COLLECTOR_COST) {
                     buyAutoCollectorButton.disabled = true;
                     autoCollectorStatus.textContent = `Недостаточно TapCoins для покупки. Нужно ${AUTO_COLLECTOR_COST}.`;
                     autoCollectorStatus.style.color = '#fc8181'; 
@@ -1262,7 +1427,7 @@
                 return;
             }
 
-            if (hasAutoCollector) {
+            if (window.hasAutoCollector) {
                 if (autoCollectorStatus) {
                     autoCollectorStatus.textContent = "Авто-Сборщик уже куплен.";
                     autoCollectorStatus.style.color = '#f6ad55'; 
@@ -1270,7 +1435,7 @@
                 return;
             }
 
-            if (score < AUTO_COLLECTOR_COST) {
+            if (window.score < AUTO_COLLECTOR_COST) {
                 if (autoCollectorStatus) {
                     autoCollectorStatus.textContent = `Недостаточно TapCoins для покупки. Нужно ${AUTO_COLLECTOR_COST}.`;
                     autoCollectorStatus.style.color = '#fc8181'; 
@@ -1307,10 +1472,10 @@
                     });
                 }); 
 
-                score = parseFloat((score - AUTO_COLLECTOR_COST).toFixed(2)); 
-                hasAutoCollector = true; 
+                window.score = parseFloat((window.score - AUTO_COLLECTOR_COST).toFixed(2)); 
+                window.hasAutoCollector = true; 
 
-                updateDisplays(); 
+                window.updateDisplays(); 
                 updateAutoCollectorDisplay(); 
                 console.log(`Авто-Сборщик куплен за ${AUTO_COLLECTOR_COST} TapCoins.`);
 
@@ -1343,6 +1508,258 @@
                 }, 3000); 
             }
         }
+
+        // --- Логика игры "Змейка" (инкапсулирована) ---
+        const snakeGame = (() => {
+            // Приватные переменные
+            let canvas, ctx, scoreDisplay, startGameBtn, restartGameBtn, messageBox;
+            let upBtn, downBtn, leftBtn, rightBtn;
+            let snake;
+            let food;
+            let dx, dy; // Направление движения
+            let score; // Это локальный счет игры Змейка
+            let changingDirection;
+            let gameInterval;
+            let gameSpeed = 150; // Миллисекунды на кадр
+            const gridSize = 20; // Размер сегмента змейки и еды
+
+            // Приватные функции
+            function showSnakeMessage(message, duration = 2000) {
+                if (messageBox) {
+                    messageBox.textContent = message;
+                    messageBox.style.display = 'block';
+                    if (duration > 0) {
+                        setTimeout(() => {
+                            if (messageBox) messageBox.style.display = 'none';
+                        }, duration);
+                    }
+                }
+            }
+
+            // Инициализация состояния игры
+            function initSnakeGame() {
+                snake = [
+                    { x: 10 * gridSize, y: 10 * gridSize },
+                    { x: 9 * gridSize, y: 10 * gridSize },
+                    { x: 8 * gridSize, y: 10 * gridSize }
+                ];
+                food = {};
+                dx = gridSize; // Начальное направление - вправо
+                dy = 0;
+                score = 0; // Сбрасываем локальный счет Змейки
+                if (scoreDisplay) scoreDisplay.textContent = score.toFixed(2); // Теперь отображаем 0.00
+                changingDirection = false;
+                clearInterval(gameInterval); // Очищаем любой существующий интервал
+                gameInterval = null; // Убедимся, что gameInterval обнулен
+                generateFood();
+                drawGame(); // Первоначальная отрисовка
+                showSnakeMessage("Нажмите 'Начать игру'", 3000); // Показываем начальное сообщение
+                if (startGameBtn) startGameBtn.style.display = 'block';
+                if (restartGameBtn) restartGameBtn.style.display = 'none';
+            }
+
+            // Генерация случайной позиции еды
+            function generateFood() {
+                food.x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
+                food.y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
+
+                // Убедитесь, что еда не появляется на змейке
+                for (let i = 0; i < snake.length; i++) {
+                    if (snake[i].x === food.x && snake[i].y === food.y) {
+                        generateFood(); // Пересчитываем, если есть наложение
+                        return;
+                    }
+                }
+            }
+
+            // Отрисовка всего на холсте
+            function drawGame() {
+                if (!ctx) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст
+
+                // Отрисовка еды
+                ctx.fillStyle = '#fc8181'; // Red-400
+                ctx.strokeStyle = '#c53030'; // Red-700
+                ctx.beginPath();
+                ctx.roundRect(food.x, food.y, gridSize, gridSize, 5); // Закругленные углы
+                ctx.fill();
+                ctx.stroke();
+
+                // Отрисовка змейки
+                snake.forEach((segment, index) => {
+                    ctx.fillStyle = '#63b3ed'; // Blue-300
+                    ctx.strokeStyle = '#2b6cb0'; // Blue-700
+                    // Отрисовка головы другим цветом или индикатором
+                    if (index === 0) {
+                        ctx.fillStyle = '#3182ce'; // Darker blue for head
+                    }
+                    ctx.beginPath();
+                    ctx.roundRect(segment.x, segment.y, gridSize, gridSize, 5); // Закругленные углы для сегментов
+                    ctx.fill();
+                    ctx.stroke();
+                });
+            }
+
+            // Перемещение змейки
+            function moveSnake() {
+                if (isGameOver()) {
+                    clearInterval(gameInterval);
+                    gameInterval = null;
+                    showSnakeMessage("Игра окончена! Счет: " + score.toFixed(2), 0); // Показываем счет с 2 знаками
+                    if (startGameBtn) startGameBtn.style.display = 'none';
+                    if (restartGameBtn) restartGameBtn.style.display = 'block';
+                    return;
+                }
+
+                changingDirection = false;
+                const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+                snake.unshift(head); // Добавляем новую голову
+
+                // Проверяем, съела ли змейка еду
+                if (head.x === food.x && head.y === food.y) {
+                    // Увеличиваем локальный счет Змейки на 0.10 и обновляем его отображение
+                    score = parseFloat((score + 0.10).toFixed(2)); 
+                    if (scoreDisplay) scoreDisplay.textContent = score.toFixed(2); // Display with two decimal places
+                    generateFood(); // Генерируем новую еду
+
+                    // Добавляем 0.10 TapCoins к основному счету
+                    window.score = parseFloat((window.score + 0.10).toFixed(2)); 
+                    window.updateDisplays(); // Обновляем отображение TapCoins
+                    window.saveGameData(); // Сохраняем данные TapMoney
+                    
+                    // Опционально увеличиваем скорость по мере увеличения счета
+                    if (gameSpeed > 50) { // Не опускаемся ниже определенной скорости
+                        gameSpeed -= 2; // Делаем немного быстрее
+                        clearInterval(gameInterval);
+                        gameInterval = setInterval(moveSnake, gameSpeed);
+                    }
+                } else {
+                    snake.pop(); // Удаляем хвост, если еда не съедена
+                }
+                drawGame();
+            }
+
+            // Проверка условий окончания игры
+            function isGameOver() {
+                // Проверка столкновения с собой (начинаем с 4-го сегмента, чтобы избежать немедленного самостолкновения)
+                for (let i = 4; i < snake.length; i++) {
+                    if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+                }
+
+                // Проверка столкновения со стенами
+                const hitLeftWall = snake[0].x < 0;
+                const hitRightWall = snake[0].x >= canvas.width;
+                const hitTopWall = snake[0].y < 0;
+                const hitBottomWall = snake[0].y >= canvas.height;
+
+                return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;
+            }
+
+            // Изменение направления змейки на основе нажатия клавиши
+            function setSnakeDirection(newDx, newDy) {
+                if (changingDirection) return;
+                changingDirection = true;
+
+                const goingUp = dy === -gridSize;
+                const goingDown = dy === gridSize;
+                const goingRight = dx === gridSize;
+                const goingLeft = dx === -gridSize;
+
+                if (newDx === -gridSize && !goingRight) { dx = newDx; dy = newDy; } // Влево
+                else if (newDx === gridSize && !goingLeft) { dx = newDx; dy = newDy; } // Вправо
+                else if (newDy === -gridSize && !goingDown) { dx = 0; dy = -gridSize; } // Вверх (исправлено)
+                else if (newDy === gridSize && !goingUp) { dx = newDx; dy = newDy; } // Вниз
+            }
+
+            function handleKeyDownSnake(event) {
+                const keyPressed = event.keyCode;
+                const LEFT_KEY = 37;
+                const RIGHT_KEY = 39;
+                const UP_KEY = 38;
+                const DOWN_KEY = 40;
+
+                if (keyPressed === LEFT_KEY) setSnakeDirection(-gridSize, 0);
+                else if (keyPressed === UP_KEY) setSnakeDirection(0, -gridSize);
+                else if (keyPressed === RIGHT_KEY) setSnakeDirection(gridSize, 0);
+                else if (keyPressed === DOWN_KEY) setSnakeDirection(0, gridSize);
+            }
+
+            // Обработчики кликов для кнопок тач-управления (именованные для корректного удаления)
+            const handleUpClick = () => setSnakeDirection(0, -gridSize);
+            const handleDownClick = () => setSnakeDirection(0, gridSize);
+            const handleLeftClick = () => setSnakeDirection(-gridSize, 0);
+            const handleRightClick = () => setSnakeDirection(gridSize, 0);
+            const handleSnakeStartClick = () => snakeGame.start();
+            const handleSnakeResetClick = () => snakeGame.reset();
+
+            // Публичный API для объекта snakeGame
+            return {
+                init: () => {
+                    // Получаем ссылки на DOM-элементы игры "Змейка"
+                    canvas = document.getElementById('snakeGameCanvas');
+                    ctx = canvas ? canvas.getContext('2d') : null;
+                    scoreDisplay = document.getElementById('snakeScore');
+                    startGameBtn = document.getElementById('startSnakeGameBtn');
+                    restartGameBtn = document.getElementById('restartSnakeGameBtn');
+                    messageBox = document.getElementById('snakeMessageBox');
+
+                    upBtn = document.getElementById('snakeUpBtn');
+                    downBtn = document.getElementById('snakeDownBtn');
+                    leftBtn = document.getElementById('snakeLeftBtn');
+                    rightBtn = document.getElementById('snakeRightBtn');
+
+                    // Настройка размера холста для адаптивности
+                    if (canvas) {
+                        const size = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.6, 500);
+                        canvas.width = Math.floor(size / gridSize) * gridSize;
+                        canvas.height = Math.floor(size / gridSize) * gridSize;
+                    }
+                    initSnakeGame(); // Инициализация состояния игры
+                },
+                start: () => {
+                    if (!gameInterval) { // Запускаем только если игра еще не запущена
+                        if (startGameBtn) startGameBtn.style.display = 'none';
+                        if (restartGameBtn) restartGameBtn.style.display = 'none';
+                        if (messageBox) messageBox.style.display = 'none'; // Скрываем сообщение
+                        gameInterval = setInterval(moveSnake, gameSpeed);
+                    }
+                },
+                stop: () => {
+                    clearInterval(gameInterval);
+                    gameInterval = null;
+                },
+                reset: () => {
+                    initSnakeGame(); // Сбрасываем игру
+                    // snakeGame.start(); // Убрал автоматический старт после перезапуска, чтобы пользователь сам нажимал "Начать игру"
+                },
+                activateListeners: () => {
+                    document.addEventListener('keydown', handleKeyDownSnake);
+                    if (upBtn) upBtn.addEventListener('click', handleUpClick);
+                    if (downBtn) downBtn.addEventListener('click', handleDownClick);
+                    if (leftBtn) leftBtn.addEventListener('click', handleLeftClick);
+                    if (rightBtn) rightBtn.addEventListener('click', handleRightClick);
+                    if (startGameBtn) startGameBtn.addEventListener('click', handleSnakeStartClick);
+                    if (restartGameBtn) restartGameBtn.addEventListener('click', handleSnakeResetClick);
+
+                    // Перерисовка при изменении размера окна
+                    window.addEventListener('resize', snakeGame.draw);
+                },
+                deactivateListeners: () => {
+                    document.removeEventListener('keydown', handleKeyDownSnake);
+                    if (upBtn) upBtn.removeEventListener('click', handleUpClick);
+                    if (downBtn) downBtn.removeEventListener('click', handleDownClick);
+                    if (leftBtn) leftBtn.removeEventListener('click', handleLeftClick);
+                    if (rightBtn) rightBtn.removeEventListener('click', handleRightClick);
+                    if (startGameBtn) startGameBtn.removeEventListener('click', handleSnakeStartClick);
+                    if (restartGameBtn) restartGameBtn.removeEventListener('click', handleSnakeResetClick);
+
+                    window.removeEventListener('resize', snakeGame.draw);
+                    snakeGame.stop(); // Останавливаем игровой цикл при деактивации
+                },
+                draw: () => { drawGame(); } // Открываем функцию отрисовки для первоначального рендера
+            };
+        })();
+
 
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOMContentLoaded: DOM полностью загружен. Начинается инициализация приложения.");
@@ -1380,16 +1797,15 @@
 
             claimGroupTaskRewardButton = document.getElementById('claimGroupTaskRewardButton');
             groupTaskStatus = document.getElementById('groupTaskStatus');
-
+            
             claimDailyBonusButton = document.getElementById('claimDailyBonusButton');
             dailyBonusStatus = document.getElementById('dailyBonusStatus');
             buyAutoCollectorButton = document.getElementById('buyAutoCollectorButton');
             autoCollectorStatus = document.getElementById('autoCollectorStatus');
             autoCollectorCostDisplay = document.getElementById('autoCollectorCostDisplay');
 
-            // Получаем ссылку на новый чекбокс звука
             soundToggleInput = document.getElementById('soundToggle');
-
+            playSnakeGameBtn = document.getElementById('playSnakeGameBtn'); // Получаем ссылку на кнопку "Играть в Змейку"
 
             navButtons = document.querySelectorAll('.nav-button');
             pages = document.querySelectorAll('.page-content');
@@ -1418,6 +1834,14 @@
                 });
             });
 
+            // Обработчик для кнопки "Играть в Змейку"
+            if (playSnakeGameBtn) {
+                playSnakeGameBtn.addEventListener('click', () => {
+                    playClickSound();
+                    showPage('snakeGamePage');
+                });
+            }
+
             if (clickButton) {
                 clickButton.addEventListener('click', async () => { 
                     playClickSound(); 
@@ -1434,12 +1858,12 @@
 
                             if (timeLeft <= 0) {
                                 clearInterval(timerInterval); 
-                                score = parseFloat((score + tapCoinsPerAd).toFixed(2)); 
-                                updateDisplays(); 
+                                window.score = parseFloat((window.score + window.tapCoinsPerAd).toFixed(2)); 
+                                window.updateDisplays(); 
                                 if (clickButton) clickButton.disabled = false; 
                                 if (timerDisplay) timerDisplay.classList.add('hidden'); 
                                 console.log('Клик: Счет увеличен, кнопка активна. Сохранение...');
-                                await saveGameData(); 
+                                await window.saveGameData(); 
                             }
                         }, 1000);
                     }, loadingText, timerDisplay, clickButton);
@@ -1462,12 +1886,12 @@
 
                             if (timeLeft <= 0) {
                                 clearInterval(upgradeTimerInterval);
-                                tapCoinsPerAd = parseFloat((tapCoinsPerAd + 0.10).toFixed(2)); 
-                                updateDisplays(); 
+                                window.tapCoinsPerAd = parseFloat((window.tapCoinsPerAd + 0.10).toFixed(2)); 
+                                window.updateDisplays(); 
                                 if (upgradeClickButton) upgradeClickButton.disabled = false;
                                 if (upgradeTimerDisplay) upgradeTimerDisplay.classList.add('hidden');
                                 console.log('Улучшение клика: Множитель клика улучшен. Сохранение...');
-                                await saveGameData(); 
+                                await window.saveGameData(); 
                                 if (currentPageId === 'mainPage' && timerDisplay && timerDisplay.classList.contains('hidden') && loadingText && loadingText.textContent === "") {
                                     if (clickButton) clickButton.disabled = false;
                                 }
@@ -1493,12 +1917,12 @@
 
                             if (timeLeft <= 0) {
                                 clearInterval(passiveTimerInterval);
-                                passiveIncomeRate = parseFloat((passiveIncomeRate + 0.001).toFixed(3)); 
-                                updateDisplays(); 
+                                window.passiveIncomeRate = parseFloat((window.passiveIncomeRate + 0.001).toFixed(3)); 
+                                window.updateDisplays(); 
                                 if (upgradePassiveIncomeButton) upgradePassiveIncomeButton.disabled = false;
                                 if (passiveIncomeTimerDisplay) passiveIncomeTimerDisplay.classList.add('hidden');
                                 console.log('Улучшение пассивного дохода: Скорость пассивного дохода улучшена. Сохранение...');
-                                await saveGameData();
+                                await window.saveGameData();
                             }
                         }, 1000);
                     }, passiveIncomeLoadingText, passiveIncomeTimerDisplay, upgradePassiveIncomeButton);
@@ -1509,11 +1933,11 @@
                 claimPassiveIncomeButton.addEventListener('click', async () => { 
                     playClickSound(); 
                     console.log("Claim passive income button clicked.");
-                    if (accumulatedPassiveIncome > 0.0001) { 
-                        score = parseFloat((score + accumulatedPassiveIncome).toFixed(2));
-                        accumulatedPassiveIncome = 0; 
-                        updateDisplays(); 
-                        await saveGameData(); 
+                    if (window.accumulatedPassiveIncome > 0.0001) { 
+                        window.score = parseFloat((window.score + window.accumulatedPassiveIncome).toFixed(2));
+                        window.accumulatedPassiveIncome = 0; 
+                        window.updateDisplays(); 
+                        await window.saveGameData(); 
                         console.log("Пассивный доход забран!");
                     } else {
                         console.log("Нет накопленного пассивного дохода для забирания.");
@@ -1541,7 +1965,8 @@
                             }, 3000); 
                         }
                         console.log("Реферальная ссылка скопирована:", referralLink);
-                    } catch (err) {
+                    }
+                     catch (err) {
                         console.error("Ошибка копирования реферальной ссылки:", err);
                         if (referralStatus) {
                             referralStatus.textContent = "Ошибка при копировании ссылки.";
@@ -1563,7 +1988,7 @@
                         return;
                     }
 
-                    if (completedTasks[JOIN_GROUP_TASK_ID]) {
+                    if (window.completedTasks[JOIN_GROUP_TASK_ID]) {
                         if (groupTaskStatus) {
                             groupTaskStatus.textContent = "Вы уже получили награду за это задание.";
                             groupTaskStatus.style.color = '#f6ad55'; 
@@ -1596,9 +2021,9 @@
                             });
                         }); 
 
-                        await loadGameData(); 
+                        await window.loadGameData(); 
 
-                        updateDisplays(); 
+                        window.updateDisplays(); 
                         updateGroupTaskStatus(); 
                         console.log(`Задание "${JOIN_GROUP_TASK_ID}" выполнено. Награда ${JOIN_GROUP_REWARD} TapCoins начислена.`);
 
@@ -1627,7 +2052,7 @@
                 });
             }
 
-            // Обработчик для чекбокса звука в настройках
+            // Обработчик для переключателя звука в настройках
             if (soundToggleInput) {
                 soundToggleInput.addEventListener('change', toggleSound);
             }
@@ -1651,10 +2076,10 @@
             showPage('mainPage'); 
         }); 
 
-        window.addEventListener('beforeunload', saveGameData);
+        window.addEventListener('beforeunload', window.saveGameData);
         window.addEventListener('pagehide', () => {
             console.log("pagehide: Приложение скрывается/закрывается. Сохранение данных.");
-            saveGameData();
+            window.saveGameData();
         });
     </script>
 </body>
