@@ -1,5 +1,6 @@
 import os
 import logging
+# import json # Удален импорт модуля json, так как request.get_json() делает это автоматически
 from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from flask import Flask, request
@@ -23,8 +24,8 @@ if not BOT_TOKEN:
 WEB_APP_URL = "https://tanya1232.github.io/TapMoney/"
 
 # --- Конфигурация вебхука ---
-# ВАШ АКТУАЛЬНЫЙ публичный URL Pella.app:
-WEBHOOK_BASE_URL = "https://78e9e4f015ff461d8e3d668d91b4525e.pella.app" 
+# ВАШ АКТУАЛЬНЫЙ публичный URL Pella.app, полученный из getWebhookInfo:
+WEBHOOK_BASE_URL = "https://slate-greyhedgehog.onpella.app" 
 WEBHOOK_PATH = "/webhook"
 FULL_WEBHOOK_URL = f"{WEBHOOK_BASE_URL}{WEBHOOK_PATH}"
 
@@ -40,16 +41,17 @@ def index():
     logger.info("Получен запрос на корневой URL.")
     return 'Бот TapMoney запущен и ожидает сообщений через Webhook!', 200
 
-# --- Основной обработчик вебхуков (ИСПРАВЛЕНО: теперь синхронный) ---
+# --- Основной обработчик вебхуков ---
 @app.route(WEBHOOK_PATH, methods=['POST'])
-def webhook_handler(): # Изменено с async def на def
+def webhook_handler():
     logger.info("Получен запрос на вебхук.")
     if request.headers.get('content-type') == 'application/json':
-        json_string = request.get_data().decode('utf-8')
-        update = Update.de_json(json_string, bot_application.bot)
+        # ИСПРАВЛЕНИЕ: Используем request.get_json() для надежного парсинга JSON
+        json_data = request.get_json(force=True) 
+        update = Update.de_json(json_data, bot_application.bot) # Передаем словарь
         
         # Запускаем обработку обновления синхронно
-        asyncio.run(bot_application.process_update(update)) # Используем asyncio.run()
+        asyncio.run(bot_application.process_update(update))
         
         return '!', 200
     else:
