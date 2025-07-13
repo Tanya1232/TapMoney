@@ -47,7 +47,9 @@ def webhook_handler():
     logger.info("Получен запрос на вебхук.")
     if request.headers.get('content-type') == 'application/json':
         json_data = request.get_json(force=True) 
+        logger.info(f"Получены данные (JSON): {json_data}") # Добавлено логирование JSON данных
         update = Update.de_json(json_data, bot_application.bot)
+        logger.info(f"Тип обновления: {type(update)}") # Добавлено логирование типа обновления
         
         logger.info(f"Обновление от пользователя: {update.effective_user.id if update.effective_user else 'None'}")
         
