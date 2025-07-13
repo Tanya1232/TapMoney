@@ -23,83 +23,92 @@ if not BOT_TOKEN:
 WEB_APP_URL = "https://tanya1232.github.io/TapMoney/"
 
 # --- Конфигурация вебхука ---
-WEBHOOK_BASE_URL = "https://slate-greyhedgehog.onpella.app"  # замените на актуальный при необходимости
+# ВАЖНО: Этот URL должен точно совпадать с публичным URL вашей Pella.app инстанции!
+# Обновлено на основе вашего getWebhookInfo
+WEBHOOK_BASE_URL = "https://slate-greyhedgehog.onpella.app" 
 WEBHOOK_PATH = "/webhook"
 FULL_WEBHOOK_URL = f"{WEBHOOK_BASE_URL}{WEBHOOK_PATH}"
 
-# --- Flask-приложение ---
+# --- Инициализация Flask-приложения для обработки вебхуков ---
 app = Flask(__name__)
 
-# --- Инициализация Telegram бота ---
+# --- Инициализация бота ---
 bot_application = Application.builder().token(BOT_TOKEN).build()
 
-# --- Корневая страница ---
+# --- Обработчик для корневого URL (для проверки работы) ---
 @app.route('/')
 def index():
     logger.info("Получен запрос на корневой URL.")
     return 'Бот TapMoney запущен и ожидает сообщений через Webhook!', 200
 
-# --- Обработка Webhook от Telegram ---
+# --- Основной обработчик вебхуков ---
 @app.route(WEBHOOK_PATH, methods=['POST'])
 def webhook_handler():
     logger.info("Получен запрос на вебхук.")
     if request.headers.get('content-type') == 'application/json':
-        json_data = request.get_json(force=True)
+        json_data = request.get_json(force=True) 
         update = Update.de_json(json_data, bot_application.bot)
-
-        # Обработка обновления безопасно через create_task
+        
+        logger.info(f"Обновление от пользователя: {update.effective_user.id if update.effective_user else 'None'}")
+        
+        # Добавлено логирование перед вызовом process_update
+        logger.info("Вызов bot_application.process_update...")
+        
+        # Используем loop.create_task для асинхронной обработки, чтобы не блокировать вебхук
         loop = asyncio.get_event_loop()
         loop.create_task(bot_application.process_update(update))
-
-        return 'OK', 200
+        
+        return 'OK', 200 # Возвращаем OK немедленно
     else:
         logger.error("Неверный тип контента в вебхуке.")
         return 'Content-Type must be application/json', 403
 
-# --- Обработчики команд ---
+# --- Ваши обработчики сообщений бота ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.effective_user.id
-    user_name = update.effective_user.first_name or "Игрок"
-    web_app_url_with_ref = f"{WEB_APP_URL}?startapp={user_id}"
-
-    keyboard = [[
-        InlineKeyboardButton("Запустить игру", web_app=WebAppInfo(url=web_app_url_with_ref))
-    ]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text(
-        f"Добро пожаловать, {user_name}! Нажми кнопку, чтобы начать играть в TapMoney.\n\n"
-        f"Твой личный реферальный ID: `{user_id}`\n"
-        "Поделись этим ID или ссылкой ниже с друзьями, чтобы получить бонусы!\n\n"
-        f"Твоя реферальная ссылка для приглашения: `{web_app_url_with_ref}`",
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
+    """Отправляет приветственное сообщение и кнопку для запуска веб-приложения."""
+    logger.info(f"Вызвана команда /start для пользователя {update.effective_user.id}")
+    try:
+        user_id = update.effective_user.id
+        user_name = update.effective_user.first_name if update.effective_user.first_name else "Игрок"
+        web_app_url_with_ref = f"{WEB_APP_URL}?startapp={user_id}"
+        keyboard = [[
+            InlineKeyboardButton("Запустить игру", web_app=WebAppInfo(url=web_app_url_with_ref))
+        ]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        # Логирование перед отправкой сообщения
+        logger.info(f"Отправка приветственного сообщения пользователю {user_id}")
+        await update.message.reply_text(
+            f"Добро пожаловать, {user_name}! Нажми кнопку, чтобы начать играть в TapMoney.\n\n"
+            f"Твой личный реферальный ID: `{user_id}`\n"
+            "Поделись этим ID или ссылкой ниже с друзьями, чтобы получить бонусы!\n\n"
+            f"Твоя реферальная ссылка для приглашения: `{web_app_url_with_ref}`",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+        logger.info(f"Приветственное сообщение успешно отправлено пользователю {user_id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /start для пользователя {update.effective_user.id}: {e}")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Отправляет сообщение о том, как использовать бота."""
+    logger.info(f"Вызвана команда /help для пользователя {update.effective_user.id}")
     await update.message.reply_text("Используйте команду /start для запуска игры.")
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Отвечает на любое текстовое сообщение тем же текстом."""
+    logger.info(f"Получено текстовое сообщение от пользователя {update.effective_user.id}: {update.message.text}")
     await update.message.reply_text(f'Ты написал: "{update.message.text}"')
 
-# --- Регистрируем обработчики ---
+# --- Добавление обработчиков в bot_application ---
 bot_application.add_handler(CommandHandler("start", start))
 bot_application.add_handler(CommandHandler("help", help_command))
 bot_application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-# --- Устанавливаем вебхук при запуске ---
+# --- Запуск Flask-приложения (без автоматической установки вебхука) ---
 if __name__ == '__main__':
-    async def set_webhook_on_startup():
-        try:
-            current_webhook_info = await bot_application.bot.get_webhook_info()
-            if current_webhook_info.url != FULL_WEBHOOK_URL:
-                logger.info(f"Установка вебхука на: {FULL_WEBHOOK_URL}")
-                await bot_application.bot.set_webhook(url=FULL_WEBHOOK_URL)
-            else:
-                logger.info(f"Вебхук уже установлен на: {FULL_WEBHOOK_URL}")
-        except Exception as e:
-            logger.error(f"Ошибка при установке вебхука: {e}")
-
-    asyncio.run(set_webhook_on_startup())
-    # Flask запускается через Gunicorn на Pella — app.run() не нужен
-    pass
+    # Этот блок выполняется только при локальном запуске main.py напрямую.
+    # Для Pella.app (Gunicorn) он не используется для запуска сервера.
+    # Установка вебхука здесь удалена, чтобы избежать конфликтов при запуске Gunicorn.
+    # Вебхук нужно установить вручную один раз после деплоя.
+    pass 
