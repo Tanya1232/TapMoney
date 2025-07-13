@@ -23,8 +23,8 @@ if not BOT_TOKEN:
 WEB_APP_URL = "https://tanya1232.github.io/TapMoney/"
 
 # --- Конфигурация вебхука ---
-# Server ID вашего проекта на Pella.app: 216f45cbc5a6434f88034adc9d9b5fb6 (ВАШ АКТУАЛЬНЫЙ ID)
-WEBHOOK_BASE_URL = "https://216f45cbc5a6434f88034adc9d9b5fb6.pella.app" # Убедитесь, что это ваш текущий Server ID
+# ВАШ АКТУАЛЬНЫЙ публичный URL Pella.app:
+WEBHOOK_BASE_URL = "https://78e9e4f015ff461d8e3d668d91b4525e.pella.app" 
 WEBHOOK_PATH = "/webhook"
 FULL_WEBHOOK_URL = f"{WEBHOOK_BASE_URL}{WEBHOOK_PATH}"
 
@@ -101,15 +101,7 @@ if __name__ == '__main__':
         except Exception as e:
             logger.error(f"Ошибка при установке вебхука: {e}")
 
-    # Запускаем асинхронную функцию установки вебхука.
-    # Это должно быть выполнено один раз при старте приложения.
     asyncio.run(set_webhook_on_startup())
     
-    # Важно: app.run() закомментирован, так как Pella.app будет использовать Gunicorn
-    # для запуска Flask-приложения. Gunicorn сам управляет портом и хостом.
-    # port = int(os.environ.get('PORT', 5000))
-    # host = "0.0.0.0"
-    # logger.info(f"Flask будет слушать на порту: {port}")
-    # logger.info(f"Запуск Flask-приложения на {host}:{port}")
-    # app.run(host=host, port=port)
-    pass # Используем pass, чтобы блок if __name__ был синтаксически корректным
+    # app.run() закомментирован, так как Pella.app будет использовать Gunicorn
+    pass 
