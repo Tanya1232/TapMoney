@@ -40,15 +40,16 @@ def index():
     logger.info("Получен запрос на корневой URL.")
     return 'Бот TapMoney запущен и ожидает сообщений через Webhook!', 200
 
-# --- Основной обработчик вебхуков ---
+# --- Основной обработчик вебхуков (ИСПРАВЛЕНО: теперь синхронный) ---
 @app.route(WEBHOOK_PATH, methods=['POST'])
-async def webhook_handler():
+def webhook_handler(): # Изменено с async def на def
     logger.info("Получен запрос на вебхук.")
     if request.headers.get('content-type') == 'application/json':
         json_string = request.get_data().decode('utf-8')
         update = Update.de_json(json_string, bot_application.bot)
         
-        await bot_application.process_update(update)
+        # Запускаем обработку обновления синхронно
+        asyncio.run(bot_application.process_update(update)) # Используем asyncio.run()
         
         return '!', 200
     else:
